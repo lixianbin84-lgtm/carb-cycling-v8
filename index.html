@@ -905,7 +905,7 @@ function maxFoodAmount(name,mi){
   if(name==='鸡蛋')return [2,1,1,2][mi];
   if(name==='米饭')return [220,360,120,360][mi];
   if(name==='番薯'||name==='土豆'||name==='玉米')return [220,360,180,320][mi];
-  if(name.includes('燕麦')||name==='小麦片')return [80,40,55,40][mi];
+  if(name.includes('燕麦')||name==='小麦片')return [50,40,50,40][mi];
   if(name.includes('面包')||name.includes('吐司'))return [120,90,80,70][mi];
   if(name==='黑松露饼干'||name==='芝士脆饼干')return [35,35,45,25][mi];
   if(name==='高钙白黄油餐包')return [90,120,70,90][mi];
@@ -917,7 +917,7 @@ function maxFoodAmount(name,mi){
   if(name==='干奶酪')return [40,50,35,50][mi];
   if(name==='食用油')return [5,15,0,15][mi];
   if(name==='鲜牛乳'||name==='巴氏杀菌牛乳')return [350,200,300,200][mi];
-  if(d.cat==='veg')return [180,400,220,400][mi];
+  if(d.cat==='veg')return [180,250,150,250][mi];
   if(d.cat==='prot')return [120,260,100,240][mi];
   if(d.cat==='fat')return [120,220,80,220][mi];
   return d.unitG?10:300;
@@ -1499,29 +1499,26 @@ function closePicker(){document.getElementById('picker').classList.remove('open'
 document.addEventListener('click',closePicker);
 
 function onGramChange(di,mi,fi,newG){
-  const old=meals[di][mi][fi].g;meals[di][mi][fi].g=newG;
-  const delta=newG-old;if(Math.abs(delta)<1){renderDetail();return;}
-  const fd=DB[meals[di][mi][fi].n];let kd=delta*macroPerAmount(fd,'k');
-  const pool=[];
+  const changed=meals[di][mi][fi];
+  const fd=DB[changed.n];
+  const old=+changed.g||0;
+  changed.g=Math.max(0,roundFoodAmount(fd,newG));
+  if(fd)clampFoodRow(changed,mi);
+  const delta=changed.g-old;
+  if(Math.abs(delta)<1){renderDetail();return;}
+
+  const adjustables=[];
   meals[di].forEach((mitems,mj)=>mitems.forEach((it,fj)=>{
-    if(mj===mi&&fj===fi)return;if(it.lk)return;
-    const dd=DB[it.n];if(!dd)return;pool.push({it,d:dd,pri:PRI[dd.cat]??5,kp:macroPerAmount(dd,'k')});
+    const dd=DB[it.n];if(!dd)return;
+    clampFoodRow(it,mj);
+    if(mj===mi&&fj===fi)return;
+    if(it.lk||dd.cat==='veg'||dd.k<=0)return;
+    adjustables.push({it,d:dd,mi:mj,fi:fj});
   }));
-  pool.sort((a,b)=>a.pri-b.pri);
-  for(const u of pool){
-    if(Math.abs(kd)<2)break;
-    if(kd>0){
-      const mx=u.it.g*u.kp*.85;
-      const rk=Math.min(kd,mx);
-      const ra=roundFoodAmount(u.d,rk/u.kp);
-      u.it.g=Math.max(0,u.it.g-ra);
-      kd-=ra*u.kp;
-    }
-    else if(u.pri<=1){
-      const aa=roundFoodAmount(u.d,Math.abs(kd)/u.kp);
-      u.it.g+=aa;
-      kd+=aa*u.kp;
-    }
+
+  if(adjustables.length){
+    tuneDistribution(di,adjustables,tgt[wT[di]]);
+    adjustables.forEach(u=>keepFoodPositive(u.it,u.mi));
   }
   renderDetail();
 }
