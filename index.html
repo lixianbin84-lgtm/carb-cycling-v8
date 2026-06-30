@@ -903,8 +903,8 @@ function savePantryPicker(di){
 function maxFoodAmount(name,mi){
   const d=DB[name];if(!d)return 0;
   if(name==='鸡蛋')return [2,1,1,2][mi];
-  if(name==='米饭')return [180,260,80,220][mi];
-  if(name==='番薯'||name==='土豆'||name==='玉米')return [180,260,150,220][mi];
+  if(name==='米饭')return [220,360,120,360][mi];
+  if(name==='番薯'||name==='土豆'||name==='玉米')return [220,360,180,320][mi];
   if(name.includes('燕麦')||name==='小麦片')return [80,40,55,40][mi];
   if(name.includes('面包')||name.includes('吐司'))return [120,90,80,70][mi];
   if(name==='黑松露饼干'||name==='芝士脆饼干')return [35,35,45,25][mi];
@@ -1207,23 +1207,43 @@ function pruneZeroFoods(di){
 function tuneDistribution(di,items,target){
   const pool=items.filter(u=>u.d.cat!=='veg'&&u.d.k>0);
   if(!pool.length)return;
-  for(let pass=0;pass<140;pass++){
+  const stepFor=u=>u.d.unitG?1:5;
+  const canSet=(u,next)=>{
+    const min=u.it.keep&&!u.it.keepSoft?servingMinFoodAmount(u.it.n,u.mi):(u.it.g>0?minFoodAmount(u.it.n,u.mi):0);
+    return !(next<0||next>maxFoodAmount(u.it.n,u.mi)||(next>0&&next<min));
+  };
+  for(let pass=0;pass<240;pass++){
     let best=null,base=distributeScore(di,target);
     pool.forEach(u=>{
-      const stepSize=u.d.unitG?1:5;
+      const stepSize=stepFor(u);
       [-stepSize,stepSize].forEach(step=>{
         const old=u.it.g,next=old+step;
-        const min=u.it.keep&&!u.it.keepSoft?servingMinFoodAmount(u.it.n,u.mi):(old>0?minFoodAmount(u.it.n,u.mi):0);
-        if(next<0||next>maxFoodAmount(u.it.n,u.mi)||(next>0&&next<min))return;
+        if(!canSet(u,next))return;
         u.it.g=next;
         const sc=distributeScore(di,target);
         u.it.g=old;
-        if(sc+0.001<base&&(!best||sc<best.sc))best={u,step,sc};
+        if(sc+0.001<base&&(!best||sc<best.sc))best={moves:[{u,step}],sc};
+      });
+    });
+    pool.forEach(a=>{
+      pool.forEach(b=>{
+        if(a===b)return;
+        const stepA=stepFor(a),stepB=stepFor(b);
+        [[-stepA,stepB],[stepA,-stepB]].forEach(([da,db])=>{
+          const oldA=a.it.g,oldB=b.it.g,nextA=oldA+da,nextB=oldB+db;
+          if(!canSet(a,nextA)||!canSet(b,nextB))return;
+          a.it.g=nextA;b.it.g=nextB;
+          const sc=distributeScore(di,target);
+          a.it.g=oldA;b.it.g=oldB;
+          if(sc+0.001<base&&(!best||sc<best.sc))best={moves:[{u:a,step:da},{u:b,step:db}],sc};
+        });
       });
     });
     if(!best)break;
-    best.u.it.g=roundFoodAmount(best.u.d,best.u.it.g+best.step);
-    clampFoodRow(best.u.it,best.u.mi);
+    best.moves.forEach(m=>{
+      m.u.it.g=roundFoodAmount(m.u.d,m.u.it.g+m.step);
+      clampFoodRow(m.u.it,m.u.mi);
+    });
   }
 }
 
