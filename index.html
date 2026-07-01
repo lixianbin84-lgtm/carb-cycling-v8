@@ -323,6 +323,7 @@ const DB={
   '豆腐':       {c:3.4, f:4.8, p:8.1, k:84, cat:'prot',u:'g',raw:'成品重'},
   '鲜牛乳':     {c:5.8, f:4.3, p:4.1, k:78, cat:'fat', u:'ml',raw:'每100ml'},
   '巴氏杀菌牛乳':{c:5.8, f:4.3, p:4.1, k:78, cat:'fat', u:'ml',raw:'每100ml'},
+  '沃集高钙鲜牛奶':{c:5.0, f:4.4, p:3.6, k:74, cat:'fat', u:'ml',raw:'每100ml/标签值'},
   '生菜':       {c:2.9, f:0.2, p:1.4, k:15, cat:'veg', u:'g',raw:'生重'},
   '西蓝花':     {c:4.9, f:0.4, p:3.0, k:34, cat:'veg', u:'g',raw:'生重'},
   '口蘑':       {c:4.3, f:0.2, p:2.9, k:27, cat:'veg', u:'g',raw:'生重'},
@@ -335,6 +336,8 @@ const DB={
   '牛肉':       {c:0,   f:8.0, p:20.0,k:152,cat:'prot',u:'g',raw:'生重/常见值'},
   '鸡翅':       {c:0,   f:11.8,p:17.4,k:194,cat:'fat', u:'g',raw:'生重'},
   '虾':         {c:1.0, f:0.7, p:18.6,k:87, cat:'prot',u:'g',raw:'生重'},
+  '生制巴沙鱼柳':{c:0, f:1.3, p:8.0, k:44, cat:'prot',u:'g',raw:'生重/标签值'},
+  '阿拉斯加狭鳕鱼柳':{c:0, f:0, p:16.1,k:65, cat:'prot',u:'g',raw:'生重/标签值'},
   '三文鱼':     {c:21.6,f:11.8,p:17.8,k:263,cat:'fat', u:'g',raw:'成品重/标签值'},
   '坚果':       {c:19.9,f:55.4,p:16.9,k:621,cat:'fat', u:'g',raw:'成品重/标签值'},
   '安佳黄油':   {c:0.6, f:62.9,p:0.6, k:140,cat:'fat', u:'g',raw:'成品重/标签值'},
@@ -811,6 +814,15 @@ const FOOD_ALIASES={
   '牛奶':'巴氏杀菌牛乳',
   '奶':'巴氏杀菌牛乳',
   '巴氏奶':'巴氏杀菌牛乳',
+  '高钙奶':'沃集高钙鲜牛奶',
+  '高钙鲜牛奶':'沃集高钙鲜牛奶',
+  '沃集牛奶':'沃集高钙鲜牛奶',
+  '沃集高钙奶':'沃集高钙鲜牛奶',
+  '巴沙鱼':'生制巴沙鱼柳',
+  '巴沙鱼柳':'生制巴沙鱼柳',
+  '狭鳕鱼':'阿拉斯加狭鳕鱼柳',
+  '鳕鱼柳':'阿拉斯加狭鳕鱼柳',
+  '狭鳕鱼柳':'阿拉斯加狭鳕鱼柳',
   '蛋清':'蛋白',
   '蛋白':'蛋白',
   '青菜':'生菜',
@@ -925,7 +937,7 @@ function maxFoodAmount(name,mi){
   if(name==='安佳芝士')return [40,50,30,50][mi];
   if(name==='干奶酪')return [40,50,35,50][mi];
   if(name==='食用油')return [5,15,0,15][mi];
-  if(name==='鲜牛乳'||name==='巴氏杀菌牛乳')return [350,200,300,200][mi];
+  if(name==='鲜牛乳'||name==='巴氏杀菌牛乳'||name==='沃集高钙鲜牛奶')return [350,200,300,200][mi];
   if(d.cat==='veg')return [180,250,150,250][mi];
   if(d.cat==='prot')return [120,260,100,240][mi];
   if(d.cat==='fat')return [120,220,80,220][mi];
@@ -952,7 +964,7 @@ function minFoodAmount(name,mi){
   if(name==='安佳芝士')return [15,20,15,20][mi];
   if(name==='干奶酪')return [15,20,15,20][mi];
   if(name==='食用油')return 0;
-  if(name==='鲜牛乳'||name==='巴氏杀菌牛乳')return [150,0,150,0][mi];
+  if(name==='鲜牛乳'||name==='巴氏杀菌牛乳'||name==='沃集高钙鲜牛奶')return [150,0,150,0][mi];
   if(d.cat==='veg')return [80,120,80,120][mi];
   if(d.cat==='prot')return [50,80,40,80][mi];
   if(d.cat==='fat')return [50,70,30,70][mi];
@@ -973,7 +985,7 @@ function servingMinFoodAmount(name,mi){
   else if(name==='吞拿鱼沙拉三角饭团')min=80;
   else if(name==='酱爆牛肉手卷')min=100;
   else if(name==='香蕉')min=80;
-  else if(name==='鲜牛乳'||name==='巴氏杀菌牛乳')min=150;
+  else if(name==='鲜牛乳'||name==='巴氏杀菌牛乳'||name==='沃集高钙鲜牛奶')min=150;
   else if(name==='黑松露饼干'||name==='芝士脆饼干')min=15;
   else if(name==='坚果')min=8;
   else if(name==='食用油')min=5;
@@ -1077,7 +1089,7 @@ function isBreakfastCarb(name){
 function isStapleCarb(name){
   return name==='米饭'||name==='番薯'||name==='土豆'||name==='玉米'||name==='葱油拌面'||name==='韩国冷面条'||name==='吞拿鱼沙拉三角饭团'||name==='酱爆牛肉手卷';
 }
-function isMilk(name){return name==='鲜牛乳'||name==='巴氏杀菌牛乳';}
+function isMilk(name){return name==='鲜牛乳'||name==='巴氏杀菌牛乳'||name==='沃集高钙鲜牛奶';}
 function isEgg(name){return name==='鸡蛋'||name==='蛋白';}
 function isMainProtein(name){
   const d=DB[name];
