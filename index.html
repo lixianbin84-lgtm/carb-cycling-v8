@@ -318,6 +318,8 @@ const DB={
   '高钙白黄油餐包':{c:44.9,f:10.4,p:13.4,k:329,cat:'carb',u:'g',raw:'成品重/标签值'},
   '葱油拌面':   {c:49.8,f:19.2,p:13.0,k:425,cat:'carb',u:'g',raw:'成品重/标签值'},
   '韩国冷面条': {c:49.8,f:19.2,p:13.0,k:425,cat:'carb',u:'g',raw:'成品重/标签值'},
+  '吞拿鱼沙拉三角饭团':{c:34.0,f:3.2,p:5.3,k:188,cat:'carb',u:'g',raw:'成品重/标签值'},
+  '酱爆牛肉手卷':{c:32.1,f:7.0,p:7.5,k:210,cat:'carb',u:'g',raw:'成品重/标签值'},
   '豆腐':       {c:3.4, f:4.8, p:8.1, k:84, cat:'prot',u:'g',raw:'成品重'},
   '鲜牛乳':     {c:5.8, f:4.3, p:4.1, k:78, cat:'fat', u:'ml',raw:'每100ml'},
   '巴氏杀菌牛乳':{c:5.8, f:4.3, p:4.1, k:78, cat:'fat', u:'ml',raw:'每100ml'},
@@ -798,6 +800,11 @@ const FOOD_ALIASES={
   '芝士饼干':'芝士脆饼干',
   '餐包':'高钙白黄油餐包',
   '冷面':'韩国冷面条',
+  '吞拿鱼饭团':'吞拿鱼沙拉三角饭团',
+  '吞拿鱼沙拉饭团':'吞拿鱼沙拉三角饭团',
+  '三角饭团':'吞拿鱼沙拉三角饭团',
+  '牛肉手卷':'酱爆牛肉手卷',
+  '酱爆手卷':'酱爆牛肉手卷',
   '麦片':"Member's Mark高纤燕麦片",
   '燕麦':"Member's Mark高纤燕麦片",
   '燕麦片':"Member's Mark高纤燕麦片",
@@ -910,6 +917,8 @@ function maxFoodAmount(name,mi){
   if(name==='黑松露饼干'||name==='芝士脆饼干')return [35,35,45,25][mi];
   if(name==='高钙白黄油餐包')return [90,120,70,90][mi];
   if(name==='葱油拌面'||name==='韩国冷面条')return [80,150,80,130][mi];
+  if(name==='吞拿鱼沙拉三角饭团')return [100,150,100,150][mi];
+  if(name==='酱爆牛肉手卷')return [120,180,120,180][mi];
   if(name==='香蕉')return [160,80,160,80][mi];
   if(name==='坚果')return [20,15,30,15][mi];
   if(name==='安佳黄油')return [10,15,0,15][mi];
@@ -935,6 +944,8 @@ function minFoodAmount(name,mi){
   if(name==='黑松露饼干'||name==='芝士脆饼干')return [15,15,20,15][mi];
   if(name==='高钙白黄油餐包')return [35,45,30,35][mi];
   if(name==='葱油拌面'||name==='韩国冷面条')return [40,60,40,50][mi];
+  if(name==='吞拿鱼沙拉三角饭团')return [80,80,60,80][mi];
+  if(name==='酱爆牛肉手卷')return [90,100,80,100][mi];
   if(name==='香蕉')return [80,0,80,0][mi];
   if(name==='坚果')return 5;
   if(name==='安佳黄油')return 0;
@@ -959,6 +970,8 @@ function servingMinFoodAmount(name,mi){
   else if(name.includes('面包')||name.includes('吐司'))min=35;
   else if(name==='高钙白黄油餐包')min=35;
   else if(name==='葱油拌面'||name==='韩国冷面条')min=50;
+  else if(name==='吞拿鱼沙拉三角饭团')min=80;
+  else if(name==='酱爆牛肉手卷')min=100;
   else if(name==='香蕉')min=80;
   else if(name==='鲜牛乳'||name==='巴氏杀菌牛乳')min=150;
   else if(name==='黑松露饼干'||name==='芝士脆饼干')min=15;
@@ -1059,10 +1072,10 @@ function checkFeasibilityBeforeDistribute(di,day){
 }
 
 function isBreakfastCarb(name){
-  return name==='香蕉'||name.includes('燕麦')||name==='小麦片'||name.includes('面包')||name.includes('吐司')||name==='高钙白黄油餐包';
+  return name==='香蕉'||name.includes('燕麦')||name==='小麦片'||name.includes('面包')||name.includes('吐司')||name==='高钙白黄油餐包'||name==='吞拿鱼沙拉三角饭团';
 }
 function isStapleCarb(name){
-  return name==='米饭'||name==='番薯'||name==='土豆'||name==='玉米'||name==='葱油拌面'||name==='韩国冷面条';
+  return name==='米饭'||name==='番薯'||name==='土豆'||name==='玉米'||name==='葱油拌面'||name==='韩国冷面条'||name==='吞拿鱼沙拉三角饭团'||name==='酱爆牛肉手卷';
 }
 function isMilk(name){return name==='鲜牛乳'||name==='巴氏杀菌牛乳';}
 function isEgg(name){return name==='鸡蛋'||name==='蛋白';}
@@ -1101,12 +1114,12 @@ function buildDayFromPantry(di){
   const used=new Set();
   const addUse=(mi,name,g=0,keep=1)=>{add(mi,name,g,keep); if(name)used.add(name);};
 
-  const breakfastCarb=first(["Member's Mark高纤燕麦片",'小麦片','全麦面包','生吐司面包','嘉顿亚麻籽全麦吐司','高钙白黄油餐包','香蕉'])||breakfastCarbs[0];
+  const breakfastCarb=first(["Member's Mark高纤燕麦片",'小麦片','全麦面包','生吐司面包','嘉顿亚麻籽全麦吐司','高钙白黄油餐包','吞拿鱼沙拉三角饭团','香蕉'])||breakfastCarbs[0];
   addUse(0,breakfastCarb,0,1);
   addUse(0,eggs[0],eggs[0]==='鸡蛋'?1:0,1);
   addUse(0,milk[0],milk[0]?200:0,1);
 
-  const lunchStaple=first(['米饭','番薯','土豆','玉米','葱油拌面','韩国冷面条'])||staples[0];
+  const lunchStaple=first(['米饭','番薯','土豆','玉米','吞拿鱼沙拉三角饭团','酱爆牛肉手卷','葱油拌面','韩国冷面条'])||staples[0];
   const dinnerStaple=staples.find(n=>n!==lunchStaple)||lunchStaple;
   addUse(1,lunchStaple,0,1);
   addUse(3,dinnerStaple,0,dinnerStaple!==lunchStaple?1:0);
