@@ -1003,6 +1003,10 @@ function servingMinFoodAmount(name,mi){
 function clampFoodRow(it,mi){
   const d=DB[it.n];if(!d)return;
   const val=+it.g||0;
+  if(it.manual){
+    it.g=roundFoodAmount(d,Math.max(0,val));
+    return;
+  }
   const min=it.keep&&!it.keepSoft?servingMinFoodAmount(it.n,mi):minFoodAmount(it.n,mi);
   const max=maxFoodAmount(it.n,mi);
   it.g=roundFoodAmount(d,val>0?Math.min(Math.max(val,min),max):0);
@@ -1274,6 +1278,7 @@ function tuneDistribution(di,items,target){
 
 function autoDistributeCaloriesOnly(di,unlocked,dayTarget,mealRatio){
   unlocked.forEach(u=>{
+    delete u.it.manual;
     if(u.d.cat==='veg'){
       const base=u.mi===1||u.mi===3?150:u.mi===2?100:80;
       u.it.g=round5((+u.it.g||0)>0?u.it.g:base);
@@ -1347,6 +1352,7 @@ function autoDistributeDay(di){
   }
 
   unlocked.forEach(u=>{
+    delete u.it.manual;
     if(u.d.cat==='veg'){
       const base=u.mi===1||u.mi===3?150:u.mi===2?100:80;
       u.it.g=round5((+u.it.g||0)>0?u.it.g:base);
@@ -1528,15 +1534,15 @@ function onGramChange(di,mi,fi,newG){
   const fd=DB[changed.n];
   const old=+changed.g||0;
   changed.g=Math.max(0,roundFoodAmount(fd,newG));
-  if(fd)clampFoodRow(changed,mi);
+  changed.manual=1;
   const delta=changed.g-old;
   if(Math.abs(delta)<1){renderDetail();return;}
 
   const adjustables=[];
   meals[di].forEach((mitems,mj)=>mitems.forEach((it,fj)=>{
     const dd=DB[it.n];if(!dd)return;
-    clampFoodRow(it,mj);
     if(mj===mi&&fj===fi)return;
+    clampFoodRow(it,mj);
     if(it.lk||dd.cat==='veg'||dd.k<=0)return;
     adjustables.push({it,d:dd,mi:mj,fi:fj});
   }));
