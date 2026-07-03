@@ -1172,7 +1172,6 @@ function buildDayFromPantry(di){
 
   if(vegs[0])addUse(1,vegs[0],0,1);
   if(vegs[1])addUse(3,vegs[1],0,1);
-  else if(vegs[0])addUse(3,vegs[0],0,0);
   if(vegs[2])addUse(3,vegs[2],0,1);
 
   if(names.includes('食用油')){addUse(1,'食用油',5,1);addUse(3,'食用油',5,0);}
@@ -1207,7 +1206,7 @@ function itemMacro(it){
 
 function rawDayM(di){
   let r={c:0,f:0,p:0,k:0};
-  meals[di].forEach(items=>items.forEach(it=>{
+  meals[di].forEach((items,mi)=>items.forEach(it=>{
     const m=itemMacro(it);for(let x in r)r[x]+=m[x];
   }));
   return r;
@@ -1219,12 +1218,58 @@ function currentGoalMode(){
   return el?el.value:'cut';
 }
 
+function dayTypeOf(di){
+  return wT[di]||'mid';
+}
+function isLowDayType(type){
+  return type==='low'||type==='rest';
+}
+function isHighDayType(type){
+  return type==='high'||type==='train';
+}
+function foodRoleScore(di,target){
+  const type=dayTypeOf(di);
+  const low=isLowDayType(type);
+  const high=isHighDayType(type);
+  const total=rawDayM(di);
+  const over=v=>Math.max(0,v);
+  const sq=(v,scale,w=1)=>Math.pow(v/scale,2)*w;
+  let sc=0;
+  const vegCount={};
+  let vegKinds=0;
+  meals[di].forEach((items,mi)=>items.forEach(it=>{
+    const d=DB[it.n];if(!d)return;
+    if(d.cat==='veg'){
+      vegCount[it.n]=(vegCount[it.n]||0)+(+it.g||0);
+      vegKinds++;
+      return;
+    }
+    const m=itemMacro(it);
+    if(low&&d.cat==='prot'&&total.p>target.prot+4){
+      sc+=sq(m.p,14,1.4)+sq(over((+it.g||0)-proteinMaxByFood(it.n,mi)*.75),30,1.0);
+    }
+    if(low&&(d.cat==='fat'||d.cat==='oil')&&total.f<target.fat-3){
+      sc-=Math.min(1.8,m.f/18);
+    }
+    if(high&&(d.cat==='fat'||d.cat==='oil')&&total.f>target.fat+4){
+      sc+=sq(m.f,10,1.3);
+    }
+  }));
+  Object.values(vegCount).forEach(g=>{
+    if(g>260)sc+=sq(g-260,80,1.0);
+  });
+  if(vegKinds>1){
+    Object.values(vegCount).forEach(g=>{if(g>180)sc+=sq(g-180,70,.6);});
+  }
+  return sc;
+}
+
 function distributeScore(di,target){
   const m=rawDayM(di);
   if(currentFormulaMode()==='ding')return Math.pow((m.k-target.kcal)/15,2);
   const mode=currentGoalMode();
-  const dayType=wT[di]||'mid';
-  const lowDay=dayType==='low'||dayType==='rest';
+  const dayType=dayTypeOf(di);
+  const lowDay=isLowDayType(dayType);
   const kcal=m.k-target.kcal;
   const carb=m.c-target.carb;
   const fat=m.f-target.fat;
@@ -1246,15 +1291,18 @@ function distributeScore(di,target){
       sq(kcal,60,.2);
   }
   if(lowDay){
-    return sq(under(prot),3,4.0)+sq(over(prot-5),5,2.8)+
+    return sq(under(prot),3,4.0)+sq(over(prot-4),5,6.0)+
       sq(carb,5,3.4)+
       sq(fat,5,2.6)+
-      sq(over(kcal),70,.25)+sq(under(kcal),80,.08);
+      sq(Math.min(under(fat),over(prot)),3,4.0)+
+      sq(over(kcal),70,.25)+sq(under(kcal),80,.08)+
+      foodRoleScore(di,target);
   }
   return sq(under(prot),3,4.0)+sq(over(prot-10),10,.4)+
     sq(carb,5,3.4)+
     sq(fat,5,2.8)+
-    sq(over(kcal),70,.2)+sq(under(kcal),70,.1);
+    sq(over(kcal),70,.2)+sq(under(kcal),70,.1)+
+    foodRoleScore(di,target);
 }
 
 function pruneZeroFoods(di){
@@ -1307,6 +1355,29 @@ function tuneDistribution(di,items,target){
       clampFoodRow(m.u.it,m.u.mi);
     });
   }
+}
+
+function macroAdjustPool(di,items,key){
+  const type=dayTypeOf(di);
+  const low=isLowDayType(type);
+  const high=isHighDayType(type);
+  const pool=items.filter(u=>u.d.cat!=='veg'&&u.d[key]>0);
+  if(!pool.length)return [];
+  if(key==='f'){
+    const primary=pool.filter(u=>u.d.cat==='fat'||u.d.cat==='oil');
+    if(low&&primary.length)return primary;
+    if(primary.length)return primary.concat(pool.filter(u=>u.d.cat!=='prot'&&!primary.includes(u)));
+  }
+  if(key==='p'){
+    const primary=pool.filter(u=>u.d.cat==='prot'||isEgg(u.it.n));
+    if(primary.length)return primary;
+  }
+  if(key==='c'){
+    const primary=pool.filter(u=>u.d.cat==='carb');
+    if(primary.length)return primary;
+  }
+  if(high&&key==='c')return pool.filter(u=>u.d.cat!=='fat'&&u.d.cat!=='oil').concat(pool.filter(u=>u.d.cat==='fat'||u.d.cat==='oil'));
+  return pool;
 }
 
 function autoDistributeCaloriesOnly(di,unlocked,dayTarget,mealRatio){
@@ -1439,7 +1510,7 @@ function autoDistributeDay(di){
     ].forEach(rule=>{
       const gap=rule.target-dm[rule.key];
       if(Math.abs(gap)<=4)return;
-      const pool=unlocked.filter(u=>rule.cats.includes(u.d.cat)&&u.d[rule.key]>0);
+      const pool=macroAdjustPool(di,unlocked,rule.key);
       if(!pool.length)return;
       const power=pool.reduce((s,u)=>s+macroPerAmount(u.d,rule.key)*(gap>0?1:Math.max(1,u.it.g)),0)||1;
       pool.forEach(u=>{
