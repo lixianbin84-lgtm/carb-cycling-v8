@@ -919,12 +919,37 @@ function savePantryPicker(di){
   renderDetail();
 }
 
+function limitDayType(){
+  return wT[selDay]||'mid';
+}
+function isLowLimitDay(){
+  const t=limitDayType();
+  return t==='low'||t==='rest';
+}
+function isHighLimitDay(){
+  const t=limitDayType();
+  return t==='high'||t==='train';
+}
+function isOatFood(name){
+  return name.includes('燕麦')||name==='小麦片';
+}
+function proteinMaxByFood(name,mi){
+  const low=isLowLimitDay();
+  if(name==='牛肉')return low?[120,180,100,180][mi]:[140,220,100,200][mi];
+  if(name==='鸡腿(去皮)')return low?[120,220,100,220][mi]:[140,260,100,240][mi];
+  if(name==='生制巴沙鱼柳'||name==='阿拉斯加狭鳕鱼柳'||name==='虾')return [140,260,120,260][mi];
+  if(name==='蛋白')return [160,220,120,220][mi];
+  return low?[120,220,100,220][mi]:[120,260,100,240][mi];
+}
+
 function maxFoodAmount(name,mi){
   const d=DB[name];if(!d)return 0;
+  const low=isLowLimitDay();
+  const high=isHighLimitDay();
   if(name==='鸡蛋')return [2,1,1,2][mi];
   if(name==='米饭')return [220,360,120,360][mi];
   if(name==='番薯'||name==='土豆'||name==='玉米')return [220,360,180,320][mi];
-  if(name.includes('燕麦')||name==='小麦片')return [50,40,50,40][mi];
+  if(isOatFood(name))return high?[70,45,60,45][mi]:[65,40,60,40][mi];
   if(name.includes('面包')||name.includes('吐司'))return [120,90,80,70][mi];
   if(name==='黑松露饼干'||name==='芝士脆饼干')return [35,35,45,25][mi];
   if(name==='高钙白黄油餐包')return [90,120,70,90][mi];
@@ -932,14 +957,14 @@ function maxFoodAmount(name,mi){
   if(name==='吞拿鱼沙拉三角饭团')return [100,150,100,150][mi];
   if(name==='酱爆牛肉手卷')return [120,180,120,180][mi];
   if(name==='香蕉')return [160,80,160,80][mi];
-  if(name==='坚果')return [20,15,30,15][mi];
+  if(name==='坚果')return low?[35,45,100,45][mi]:(high?[18,15,30,15][mi]:[25,25,60,25][mi]);
   if(name==='安佳黄油')return [10,15,0,15][mi];
   if(name==='安佳芝士')return [40,50,30,50][mi];
   if(name==='干奶酪')return [40,50,35,50][mi];
   if(name==='食用油')return [5,15,0,15][mi];
   if(name==='鲜牛乳'||name==='巴氏杀菌牛乳'||name==='沃集高钙鲜牛奶')return [350,200,300,200][mi];
   if(d.cat==='veg')return [180,250,150,250][mi];
-  if(d.cat==='prot')return [120,260,100,240][mi];
+  if(d.cat==='prot')return proteinMaxByFood(name,mi);
   if(d.cat==='fat')return [120,220,80,220][mi];
   return d.unitG?10:300;
 }
@@ -951,7 +976,7 @@ function minFoodAmount(name,mi){
   if(name==='鸡蛋')return 1;
   if(name==='米饭')return [50,80,0,60][mi];
   if(name==='番薯'||name==='土豆'||name==='玉米')return [60,80,60,70][mi];
-  if(name.includes('燕麦')||name==='小麦片')return [25,0,25,0][mi];
+  if(isOatFood(name))return [25,0,25,0][mi];
   if(name.includes('面包')||name.includes('吐司'))return [35,30,35,30][mi];
   if(name==='黑松露饼干'||name==='芝士脆饼干')return [15,15,20,15][mi];
   if(name==='高钙白黄油餐包')return [35,45,30,35][mi];
@@ -1198,6 +1223,8 @@ function distributeScore(di,target){
   const m=rawDayM(di);
   if(currentFormulaMode()==='ding')return Math.pow((m.k-target.kcal)/15,2);
   const mode=currentGoalMode();
+  const dayType=wT[di]||'mid';
+  const lowDay=dayType==='low'||dayType==='rest';
   const kcal=m.k-target.kcal;
   const carb=m.c-target.carb;
   const fat=m.f-target.fat;
@@ -1217,6 +1244,12 @@ function distributeScore(di,target){
       sq(carb,5,3.0)+
       sq(fat,5,2.4)+
       sq(kcal,60,.2);
+  }
+  if(lowDay){
+    return sq(under(prot),3,4.0)+sq(over(prot-5),5,2.8)+
+      sq(carb,5,3.4)+
+      sq(fat,5,2.6)+
+      sq(over(kcal),70,.25)+sq(under(kcal),80,.08);
   }
   return sq(under(prot),3,4.0)+sq(over(prot-10),10,.4)+
     sq(carb,5,3.4)+
