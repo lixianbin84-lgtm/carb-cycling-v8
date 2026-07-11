@@ -321,6 +321,7 @@ const DB={
   '韩国冷面条': {c:49.8,f:19.2,p:13.0,k:425,cat:'carb',u:'g',raw:'成品重/标签值'},
   '吞拿鱼沙拉三角饭团':{c:34.0,f:3.2,p:5.3,k:188,cat:'carb',u:'g',raw:'成品重/标签值'},
   '酱爆牛肉手卷':{c:32.1,f:7.0,p:7.5,k:210,cat:'carb',u:'g',raw:'成品重/标签值'},
+  'Swift芝士牛肉卷':{c:19.6,f:9.1,p:14.9,k:221,cat:'carb',u:'g',raw:'成品重/标签值（923kJ/100g）'},
   '豆腐':       {c:3.4, f:4.8, p:8.1, k:84, cat:'prot',u:'g',raw:'成品重'},
   '鲜牛乳':     {c:5.8, f:4.3, p:4.1, k:78, cat:'fat', u:'ml',raw:'每100ml'},
   '巴氏杀菌牛乳':{c:5.8, f:4.3, p:4.1, k:78, cat:'fat', u:'ml',raw:'每100ml'},
@@ -345,7 +346,7 @@ const DB={
   "Member's Mark智利大西洋鲑鱼块":{c:0.6,f:16.4,p:17.8,k:220,cat:'fat',u:'g',raw:'生重/标签值'},
   '三文鱼':     {c:21.6,f:11.8,p:17.8,k:263,cat:'fat', u:'g',raw:'成品重/标签值'},
   '坚果':       {c:19.9,f:55.4,p:16.9,k:621,cat:'fat', u:'g',raw:'成品重/标签值'},
-  '安佳黄油':   {c:0.6, f:62.9,p:0.6, k:140,cat:'fat', u:'g',raw:'成品重/标签值'},
+  '安佳黄油':   {c:0.6, f:82.9,p:0.6, k:738,cat:'fat', u:'g',raw:'成品重/标签值（3088kJ/100g）'},
   '安佳芝士':   {c:4.4, f:27.9,p:20.0,k:346,cat:'fat', u:'g',raw:'成品重/标签值'},
   '妙可蓝多奶酪':{c:2.5, f:29.2,p:18.1,k:342,cat:'fat', u:'g',raw:'成品重/标签值（1431kJ/100g）'},
   '干奶酪':     {c:35.3,f:22.3,p:6.1, k:365,cat:'fat', u:'g',raw:'成品重/标签值'},
@@ -814,6 +815,10 @@ const FOOD_ALIASES={
   '三角饭团':'吞拿鱼沙拉三角饭团',
   '牛肉手卷':'酱爆牛肉手卷',
   '酱爆手卷':'酱爆牛肉手卷',
+  'swift牛肉卷':'Swift芝士牛肉卷',
+  'swift芝士牛肉卷':'Swift芝士牛肉卷',
+  '芝士牛肉卷':'Swift芝士牛肉卷',
+  '牛肉卷':'Swift芝士牛肉卷',
   '麦片':"Member's Mark高纤燕麦片",
   '燕麦':"Member's Mark高纤燕麦片",
   '燕麦片':"Member's Mark高纤燕麦片",
@@ -826,6 +831,12 @@ const FOOD_ALIASES={
   '沃集高钙奶':'沃集高钙鲜牛奶',
   '低脂牛奶':"Member's Mark低脂鲜牛奶",
   '低脂鲜牛奶':"Member's Mark低脂鲜牛奶",
+  '黄油':'安佳黄油',
+  '恒天然黄油':'安佳黄油',
+  '安佳奶油':'安佳黄油',
+  '芝士':'安佳芝士',
+  '恒天然芝士':'安佳芝士',
+  '恒天然奶酪':'安佳芝士',
   '妙可蓝多':'妙可蓝多奶酪',
   '妙可蓝多芝士':'妙可蓝多奶酪',
   '板栗':"Member's Mark有机板栗仁",
@@ -978,6 +989,7 @@ function maxFoodAmount(name,mi){
   if(name==='葱油拌面'||name==='韩国冷面条')return [80,150,80,130][mi];
   if(name==='吞拿鱼沙拉三角饭团')return [100,150,100,150][mi];
   if(name==='酱爆牛肉手卷')return [120,180,120,180][mi];
+  if(name==='Swift芝士牛肉卷')return [140,220,120,200][mi];
   if(name==='香蕉')return [160,80,160,80][mi];
   if(name==='坚果')return low?[35,45,100,45][mi]:(high?[18,15,30,15][mi]:[25,25,60,25][mi]);
   if(name==='安佳黄油')return [10,15,0,15][mi];
@@ -1007,6 +1019,7 @@ function minFoodAmount(name,mi){
   if(name==='葱油拌面'||name==='韩国冷面条')return [40,60,40,50][mi];
   if(name==='吞拿鱼沙拉三角饭团')return [80,80,60,80][mi];
   if(name==='酱爆牛肉手卷')return [90,100,80,100][mi];
+  if(name==='Swift芝士牛肉卷')return [90,100,80,100][mi];
   if(name==='香蕉')return [80,0,80,0][mi];
   if(name==='坚果')return 5;
   if(name==='安佳黄油')return 0;
@@ -1034,6 +1047,7 @@ function servingMinFoodAmount(name,mi){
   else if(name==='葱油拌面'||name==='韩国冷面条')min=50;
   else if(name==='吞拿鱼沙拉三角饭团')min=80;
   else if(name==='酱爆牛肉手卷')min=100;
+  else if(name==='Swift芝士牛肉卷')min=100;
   else if(name==='香蕉')min=80;
   else if(isMilk(name))min=150;
   else if(name==='黑松露饼干'||name==='芝士脆饼干')min=15;
@@ -1141,7 +1155,7 @@ function isBreakfastCarb(name){
   return name==='香蕉'||name==="Member's Mark有机板栗仁"||name.includes('燕麦')||name==='小麦片'||name.includes('面包')||name.includes('吐司')||name==='高钙白黄油餐包'||name==='吞拿鱼沙拉三角饭团';
 }
 function isStapleCarb(name){
-  return name==='米饭'||name==='番薯'||name==='土豆'||name==='玉米'||name==="Member's Mark有机板栗仁"||name==='葱油拌面'||name==='韩国冷面条'||name==='吞拿鱼沙拉三角饭团'||name==='酱爆牛肉手卷';
+  return name==='米饭'||name==='番薯'||name==='土豆'||name==='玉米'||name==="Member's Mark有机板栗仁"||name==='葱油拌面'||name==='韩国冷面条'||name==='吞拿鱼沙拉三角饭团'||name==='酱爆牛肉手卷'||name==='Swift芝士牛肉卷';
 }
 function isMilk(name){return name==='鲜牛乳'||name==='巴氏杀菌牛乳'||name==='沃集高钙鲜牛奶'||name==="Member's Mark低脂鲜牛奶";}
 function isEgg(name){return name==='鸡蛋'||name==='蛋白';}
@@ -1185,7 +1199,7 @@ function buildDayFromPantry(di){
   addUse(0,eggs[0],eggs[0]==='鸡蛋'?1:0,1);
   addUse(0,milk[0],milk[0]?200:0,1);
 
-  const lunchStaple=first(['米饭','番薯','土豆','玉米','吞拿鱼沙拉三角饭团','酱爆牛肉手卷','葱油拌面','韩国冷面条'])||staples[0];
+  const lunchStaple=first(['米饭','番薯','土豆','玉米','吞拿鱼沙拉三角饭团','酱爆牛肉手卷','Swift芝士牛肉卷','葱油拌面','韩国冷面条'])||staples[0];
   const dinnerStaple=staples.find(n=>n!==lunchStaple)||lunchStaple;
   addUse(1,lunchStaple,0,1);
   addUse(3,dinnerStaple,0,dinnerStaple!==lunchStaple?1:0);
