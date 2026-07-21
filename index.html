@@ -327,6 +327,8 @@ const DB={
   '巴氏杀菌牛乳':{c:5.8, f:4.3, p:4.1, k:78, cat:'fat', u:'ml',raw:'每100ml'},
   '沃集高钙鲜牛奶':{c:5.0, f:4.4, p:3.6, k:74, cat:'fat', u:'ml',raw:'每100ml/标签值'},
   "Member's Mark低脂鲜牛奶":{c:5.6, f:1.0, p:4.0, k:48, cat:'prot',u:'ml',raw:'每100ml/标签值'},
+  '冠益乳风味发酵乳':{c:10.7,f:6.0,p:5.0,k:117,cat:'fat',u:'g',raw:'成品重/标签值（489kJ/100g；糖10.2g）'},
+  '卡士007无蔗糖低GI酸奶':{c:5.5,f:5.0,p:4.0,k:83,cat:'fat',u:'g',raw:'成品重/标签值（347kJ/100g；轻食杯）'},
   '生菜':       {c:2.9, f:0.2, p:1.4, k:15, cat:'veg', u:'g',raw:'生重'},
   '西蓝花':     {c:4.9, f:0.4, p:3.0, k:34, cat:'veg', u:'g',raw:'生重'},
   '口蘑':       {c:4.3, f:0.2, p:2.9, k:27, cat:'veg', u:'g',raw:'生重'},
@@ -831,6 +833,11 @@ const FOOD_ALIASES={
   '沃集高钙奶':'沃集高钙鲜牛奶',
   '低脂牛奶':"Member's Mark低脂鲜牛奶",
   '低脂鲜牛奶':"Member's Mark低脂鲜牛奶",
+  '冠益乳':'冠益乳风味发酵乳',
+  '风味发酵乳':'冠益乳风味发酵乳',
+  '卡士007':'卡士007无蔗糖低GI酸奶',
+  '卡士酸奶':'卡士007无蔗糖低GI酸奶',
+  '卡士无蔗糖酸奶':'卡士007无蔗糖低GI酸奶',
   '黄油':'安佳黄油',
   '恒天然黄油':'安佳黄油',
   '安佳奶油':'安佳黄油',
@@ -923,7 +930,7 @@ function foodPickRank(name,type){
     if(name==='米饭'||name==='土豆'||name==='番薯'||name==='玉米')return{cls:'good',label:'高碳'};
     if(isLowFatProtein(name))return{cls:'good',label:'低脂蛋白'};
     if(DB[name]?.cat==='veg')return{cls:'good',label:'蔬菜'};
-    if(name==="Member's Mark高纤燕麦片"||name==='鲜牛乳'||name==='巴氏杀菌牛乳'||name==='鸡蛋')return{cls:'caution',label:'少脂'};
+    if(name==="Member's Mark高纤燕麦片"||name==='鲜牛乳'||name==='巴氏杀菌牛乳'||isYogurt(name)||name==='鸡蛋')return{cls:'caution',label:'少脂'};
     if(name==='坚果'||name==='食用油'||name==='安佳黄油'||name==='安佳芝士'||name==='妙可蓝多奶酪'||name==='干奶酪'||name==='鸡翅'||name==='三文鱼')return{cls:'avoid',label:'高脂'};
     if(isBreakfastCarb(name))return{cls:'caution',label:'少量'};
   }
@@ -997,6 +1004,7 @@ function maxFoodAmount(name,mi){
   if(name==='妙可蓝多奶酪')return [40,50,30,50][mi];
   if(name==='干奶酪')return [40,50,35,50][mi];
   if(name==='食用油')return [5,15,0,15][mi];
+  if(isYogurt(name))return [200,100,200,100][mi];
   if(isMilk(name))return [350,200,300,200][mi];
   if(d.cat==='veg')return [180,250,150,250][mi];
   if(d.cat==='prot')return proteinMaxByFood(name,mi);
@@ -1027,6 +1035,7 @@ function minFoodAmount(name,mi){
   if(name==='妙可蓝多奶酪')return [15,20,15,20][mi];
   if(name==='干奶酪')return [15,20,15,20][mi];
   if(name==='食用油')return 0;
+  if(isYogurt(name))return [100,0,100,0][mi];
   if(isMilk(name))return [150,0,150,0][mi];
   if(d.cat==='veg')return [80,120,80,120][mi];
   if(d.cat==='prot')return [50,80,40,80][mi];
@@ -1049,6 +1058,7 @@ function servingMinFoodAmount(name,mi){
   else if(name==='酱爆牛肉手卷')min=100;
   else if(name==='Swift芝士牛肉卷')min=100;
   else if(name==='香蕉')min=80;
+  else if(isYogurt(name))min=100;
   else if(isMilk(name))min=150;
   else if(name==='黑松露饼干'||name==='芝士脆饼干')min=15;
   else if(name==='坚果')min=8;
@@ -1157,7 +1167,8 @@ function isBreakfastCarb(name){
 function isStapleCarb(name){
   return name==='米饭'||name==='番薯'||name==='土豆'||name==='玉米'||name==="Member's Mark有机板栗仁"||name==='葱油拌面'||name==='韩国冷面条'||name==='吞拿鱼沙拉三角饭团'||name==='酱爆牛肉手卷'||name==='Swift芝士牛肉卷';
 }
-function isMilk(name){return name==='鲜牛乳'||name==='巴氏杀菌牛乳'||name==='沃集高钙鲜牛奶'||name==="Member's Mark低脂鲜牛奶";}
+function isYogurt(name){return name==='冠益乳风味发酵乳'||name==='卡士007无蔗糖低GI酸奶';}
+function isMilk(name){return name==='鲜牛乳'||name==='巴氏杀菌牛乳'||name==='沃集高钙鲜牛奶'||name==="Member's Mark低脂鲜牛奶"||isYogurt(name);}
 function isEgg(name){return name==='鸡蛋'||name==='蛋白';}
 function isMainProtein(name){
   const d=DB[name];
