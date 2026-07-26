@@ -71,9 +71,10 @@ body{background:var(--bg);min-height:100vh;-webkit-font-smoothing:antialiased;}
 .hint{grid-column:1/-1;font-size:11px;color:var(--tx3);line-height:1.4;}
 
 .det{background:var(--sur);border:1px solid rgba(226,226,222,.9);border-radius:18px;overflow:visible;box-shadow:0 8px 24px rgba(0,0,0,.05);}
+.day-sticky{position:sticky;top:var(--app-header-height);z-index:40;background:rgba(255,255,255,.94);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-radius:18px 18px 0 0;}
 .dh{padding:11px 14px 6px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;border-radius:18px 18px 0 0;}
 .dt{font-size:14px;font-weight:600;display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
-.macro-sticky{position:sticky;top:var(--app-header-height);z-index:40;padding:9px 14px;background:rgba(255,255,255,.94);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--bd);}
+.macro-sticky{padding:9px 14px;border-bottom:1px solid var(--bd);}
 .dbs{display:flex;justify-content:center;gap:5px;flex-wrap:wrap;}
 .mb{font-size:11px;padding:3px 8px;border-radius:999px;font-weight:500;border:1.5px solid transparent;}
 .mb-ok  {background:#e6f7f1;color:#0d7a54;border-color:#8ed4b8;}
@@ -278,10 +279,12 @@ body{background:var(--bg);min-height:100vh;-webkit-font-smoothing:antialiased;}
 <div class="week" id="week"></div>
 
 <div class="det" id="det" style="display:none">
-  <div class="dh">
-    <div class="dt" id="d-ttl"></div>
+  <div class="day-sticky">
+    <div class="dh">
+      <div class="dt" id="d-ttl"></div>
+    </div>
+    <div class="macro-sticky"><div class="dbs" id="d-bs"></div></div>
   </div>
-  <div class="macro-sticky"><div class="dbs" id="d-bs"></div></div>
   <div class="meals" id="meals"></div>
 </div>
 </div>
