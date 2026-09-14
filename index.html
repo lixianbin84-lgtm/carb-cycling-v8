@@ -207,6 +207,7 @@ body{background:var(--bg);min-height:100vh;-webkit-font-smoothing:antialiased;}
 .ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.28);z-index:200;align-items:center;justify-content:center;}
 .ov.open{display:flex;}
 .modal{background:var(--sur);border-radius:var(--r);padding:18px;width:min(320px,92vw);}
+.modal.wide{width:min(440px,94vw);max-height:88vh;overflow-y:auto;}
 .m-ttl{font-size:14px;font-weight:600;margin-bottom:12px;}
 .mf{display:flex;flex-direction:column;gap:3px;margin-bottom:10px;}
 .mf label{font-size:11px;color:var(--tx2);}
@@ -222,6 +223,43 @@ body{background:var(--bg);min-height:100vh;-webkit-font-smoothing:antialiased;}
 .tpl-btn{width:100%;min-height:36px;text-align:left;padding:8px 10px;border:1px solid var(--bd);border-radius:10px;background:var(--sur2);color:var(--tx);font-size:13px;cursor:pointer;}
 .tpl-btn:hover{border-color:var(--acc);color:var(--acc);}
 .tpl-btn.empty{color:var(--tx3);background:var(--sur);border-style:dashed;cursor:default;}
+.smart-food-intro{padding:10px 11px;margin-bottom:10px;border:1px solid var(--hi-bd);border-radius:12px;background:var(--hi-bg);color:var(--tx2);font-size:11px;line-height:1.55;}
+.smart-food-intro strong{display:block;margin-bottom:2px;color:var(--acc);font-size:13px;}
+.smart-food-or{display:flex;align-items:center;gap:8px;margin:10px 0;color:var(--tx3);font-size:10px;}
+.smart-food-or::before,.smart-food-or::after{content:"";height:1px;flex:1;background:var(--bd);}
+.smart-manual-link{display:block;width:100%;margin-top:8px;padding:7px;border:0;background:transparent;color:var(--tx3);font-size:11px;text-decoration:underline;cursor:pointer;}
+.smart-photo-help{margin-top:5px;color:var(--tx3);font-size:10px;line-height:1.45;text-align:center;}
+.food-form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+.food-form-grid .wide-field{grid-column:1/-1;}
+.food-form-help{font-size:11px;color:var(--tx3);line-height:1.5;margin:8px 0;}
+.food-hub-actions{display:flex;gap:7px;margin-top:11px;}
+.food-library-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:15px 0 7px;padding-top:12px;border-top:1px solid var(--bd);}
+.food-library-title{font-size:12px;font-weight:700;color:var(--tx2);}
+.food-library-tools{display:flex;gap:5px;}
+.mini-btn{border:1px solid var(--bd);background:var(--sur);color:var(--tx2);border-radius:8px;padding:5px 7px;font-size:10px;cursor:pointer;}
+.custom-food-list{display:flex;flex-direction:column;gap:6px;}
+.custom-food-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;background:var(--sur2);border-radius:10px;padding:8px 9px;}
+.custom-food-main{min-width:0;}
+.custom-food-name{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.custom-food-meta{font-size:10px;color:var(--tx3);margin-top:2px;}
+.custom-food-btns{display:flex;gap:4px;}
+.custom-food-empty{font-size:11px;color:var(--tx3);padding:9px;text-align:center;border:1px dashed var(--bd);border-radius:10px;}
+.add-own-food{width:100%;margin-top:8px;min-height:38px;border:1px dashed var(--hi-bd);border-radius:11px;background:var(--hi-bg);color:var(--acc);font-size:12px;font-weight:700;cursor:pointer;}
+.form-error{display:none;margin-top:8px;padding:7px 9px;border-radius:8px;background:var(--lo-bg);color:var(--lo);font-size:11px;line-height:1.45;}
+.food-search-row{display:grid;grid-template-columns:1fr auto;gap:7px;}
+.food-search-row input{height:38px;padding:7px 9px;border:1px solid var(--bd);border-radius:10px;font-size:13px;outline:none;min-width:0;}
+.food-search-row input:focus{border-color:var(--acc);}
+.food-status{min-height:20px;margin:7px 0;font-size:11px;color:var(--tx3);line-height:1.45;}
+.food-results{display:flex;flex-direction:column;gap:6px;max-height:265px;overflow-y:auto;}
+.food-result{width:100%;display:grid;grid-template-columns:1fr auto;gap:8px;text-align:left;padding:9px;border:1px solid var(--bd);border-radius:10px;background:var(--sur2);cursor:pointer;}
+.food-result:hover{border-color:var(--acc);background:var(--hi-bg);}
+.food-result-name{font-size:12px;font-weight:700;color:var(--tx);}
+.food-result-brand,.food-result-macro{font-size:10px;color:var(--tx3);margin-top:2px;}
+.food-result-kcal{font-size:12px;color:var(--acc);font-weight:700;white-space:nowrap;}
+.upload-box{display:block;border:1px dashed var(--hi-bd);background:var(--hi-bg);color:var(--acc);border-radius:12px;padding:14px;text-align:center;font-size:12px;font-weight:700;cursor:pointer;}
+.upload-box input{display:none;}
+.ocr-preview{display:none;max-width:100%;max-height:190px;margin:8px auto;border-radius:10px;border:1px solid var(--bd);object-fit:contain;}
+.source-note{margin-bottom:9px;padding:7px 9px;background:#f7faf8;border:1px solid #dcebe4;border-radius:9px;color:var(--tx2);font-size:10px;line-height:1.4;}
 
 @media (max-width:430px){
   .app{padding-left:10px;padding-right:10px;}
@@ -389,7 +427,29 @@ const DB={
   '干奶酪':     {c:35.3,f:22.3,p:6.1, k:365,cat:'fat', u:'g',raw:'成品重/标签值'},
   '食用油':     {c:0,   f:100, p:0,   k:900,cat:'oil', u:'ml',raw:'每100ml'},
 };
-const FN=Object.keys(DB);
+const BUILTIN_FOOD_NAMES=Object.keys(DB);
+const CUSTOM_FOOD_KEY='benlee_carb_custom_foods_v1';
+const FOOD_AI_ENDPOINT='https://1.12.47.127/carb-api/v1/recognize';
+const FOOD_AI_ACCESS_KEY='benlee_carb_food_ai_access_v1';
+function loadCustomFoods(){
+  try{
+    const rows=JSON.parse(localStorage.getItem(CUSTOM_FOOD_KEY)||'[]');
+    if(!Array.isArray(rows))return[];
+    return rows.filter(x=>x&&typeof x.name==='string'&&x.name&&Number.isFinite(+x.k)).map(x=>({
+      name:x.name.slice(0,80),c:Math.max(0,+x.c||0),f:Math.max(0,+x.f||0),p:Math.max(0,+x.p||0),k:Math.max(0,+x.k||0),
+      cat:['carb','prot','fat','veg','oil'].includes(x.cat)?x.cat:'carb',u:x.u==='ml'?'ml':'g',raw:x.raw||'自定义/每100'+(x.u==='ml'?'ml':'g'),
+      custom:1,source:x.source||'手动录入',sourceId:x.sourceId||'',savedAt:x.savedAt||new Date().toISOString()
+    }));
+  }catch(e){return[];}
+}
+let customFoods=loadCustomFoods().filter(x=>!BUILTIN_FOOD_NAMES.includes(x.name));
+customFoods.forEach(x=>{if(!DB[x.name])DB[x.name]={...x};});
+let FN=Object.keys(DB);
+function refreshFoodNames(){FN=Object.keys(DB);}
+function saveCustomFoods(){
+  try{localStorage.setItem(CUSTOM_FOOD_KEY,JSON.stringify(customFoods));return true;}
+  catch(e){alert('食物库保存失败，请先导出备份或清理浏览器空间。');return false;}
+}
 const DOTCOL={carb:'#1a9e6e',fat:'#f0a030',prot:'#2f7ed4',veg:'#7ab648',oil:'#d46030'};
 const PRI={veg:0,carb:1,prot:2,fat:3,oil:4};
 const DAYS=['周一','周二','周三','周四','周五','周六','周日'];
@@ -420,6 +480,11 @@ let wT=['mid','high','mid','high','low','mid','low'];
 let dMode=['休息','训练','休息','训练','休息','休息','休息'];
 let selDay=0;let setupOpen=true;let meals=buildMeals();let _mc=null;let activeProfile=0;
 let pantryFoods=Array.from({length:7},()=>[]);
+let foodHubContext=null;
+
+function escapeHtml(value){
+  return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
 
 function diffClass(actual,target){
   const diff=actual-target;
@@ -822,9 +887,10 @@ function renderDetail(){
   const ml=document.getElementById('meals');ml.innerHTML='';
   const pantry=document.createElement('div');pantry.className='pantry';
   const picked=pantryFoods[di]||[];
-  const chips=picked.length?picked.map(n=>`<span class="food-chip">${n}</span>`).join(''):'<span class="pantry-empty">还没选择今天可用的食物</span>';
+  const chips=picked.length?picked.map(n=>`<span class="food-chip">${escapeHtml(n)}</span>`).join(''):'<span class="pantry-empty">还没选择今天可用的食物</span>';
   pantry.innerHTML=
     `<div class="pantry-row"><div class="pantry-picked">${chips}</div><button class="pantry-btn sec" onclick="openPantryPicker(${di})">选择食物</button><button class="pantry-btn" onclick="buildDayFromPantry(${di})">生成餐单</button></div>`+
+    `<button class="add-own-food" type="button" onclick="openFoodHub({kind:'pantry',di:${di}})">＋ 添加食物</button>`+
     `<div class="pantry-help">只能从食物库多选，系统会按早餐/午餐/加餐/晚餐逻辑排餐，${isDing?'叮叮模式只按热量配平。':`再按当前${TM[wT[di]].lbl}目标配平。`}</div>`;
   ml.appendChild(pantry);
   meals[di].forEach((items,mi)=>{
@@ -1031,7 +1097,7 @@ function openPantryPicker(di){
     b.type='button';
     b.className='food-pick '+rank.cls+(selected.has(name)?' on':'');
     b.dataset.name=name;
-    b.innerHTML=`<span class="food-pick-dot" style="background:${DOTCOL[d.cat]||'#aaa'}"></span><span>${name}</span>${rank.label?`<span class="food-pick-badge">${rank.label}</span>`:''}`;
+    b.innerHTML=`<span class="food-pick-dot" style="background:${DOTCOL[d.cat]||'#aaa'}"></span><span>${escapeHtml(name)}</span>${rank.label?`<span class="food-pick-badge">${rank.label}</span>`:''}`;
     b.onclick=()=>{
       if(selected.has(name))selected.delete(name);else selected.add(name);
       b.classList.toggle('on',selected.has(name));
@@ -1052,8 +1118,11 @@ function isHighFatFood(name){
   return name==='坚果'||name==='食用油'||name==='安佳黄油'||name==='安佳芝士'||name==='妙可蓝多奶酪'||name==='干奶酪'||name==='鸡翅'||name==='三文鱼'||name==="Member's Mark智利大西洋鲑鱼块"||name==='鲜牛乳'||name==='巴氏杀菌牛乳'||name==="Member's Mark高纤燕麦片";
 }
 function foodPickRank(name,type){
+  const data=DB[name];
   const plain={cls:'',label:''};
   if(type==='high'){
+    if(data?.custom&&data.cat==='carb')return{cls:'good',label:'补碳'};
+    if(data?.custom&&data.cat==='prot'&&data.f<=6)return{cls:'good',label:'低脂蛋白'};
     if(name==='米饭'||name==='土豆'||name==='番薯'||name==='玉米')return{cls:'good',label:'高碳'};
     if(isLowFatProtein(name))return{cls:'good',label:'低脂蛋白'};
     if(DB[name]?.cat==='veg')return{cls:'good',label:'蔬菜'};
@@ -1062,6 +1131,8 @@ function foodPickRank(name,type){
     if(isBreakfastCarb(name))return{cls:'caution',label:'少量'};
   }
   if(type==='mid'||type==='train'){
+    if(data?.custom&&data.cat==='prot')return{cls:'good',label:'蛋白'};
+    if(data?.custom&&data.cat==='carb')return{cls:'good',label:'主食'};
     if(isLowFatProtein(name))return{cls:'good',label:'蛋白'};
     if(DB[name]?.cat==='veg')return{cls:'good',label:'蔬菜'};
     if(isStapleCarb(name)||isBreakfastCarb(name))return{cls:'good',label:'主食'};
@@ -1069,6 +1140,9 @@ function foodPickRank(name,type){
     if(isHighFatFood(name))return{cls:'caution',label:'少量'};
   }
   if(type==='low'||type==='rest'){
+    if(data?.custom&&data.cat==='prot')return{cls:'good',label:'蛋白'};
+    if(data?.custom&&(data.cat==='fat'||data.cat==='oil'))return{cls:'caution',label:'脂肪'};
+    if(data?.custom&&data.cat==='carb')return{cls:'avoid',label:'控碳'};
     if(isLowFatProtein(name))return{cls:'good',label:'蛋白'};
     if(DB[name]?.cat==='veg')return{cls:'good',label:'低碳'};
     if(name==='坚果'||name==='食用油'||name==='安佳黄油'||name==='安佳芝士'||name==='妙可蓝多奶酪'||name==='干奶酪'||name==='鸡蛋'||name==='三文鱼'||name==='鸡翅')return{cls:'caution',label:'脂肪'};
@@ -1491,47 +1565,112 @@ function pruneZeroFoods(di){
   }));
 }
 
+function distributionGapScore(di,target){
+  const m=rawDayM(di);
+  const sq=(v,scale,w=1)=>Math.pow(v/scale,2)*w;
+  return sq(m.c-target.carb,5,3.4)+
+    sq(m.f-target.fat,3,3.0)+
+    sq(m.p-target.prot,5,2.0)+
+    sq(m.k-target.kcal,35,.8);
+}
+
+function distributionIsBalanced(di,target){
+  const m=rawDayM(di);
+  return Math.abs(m.c-target.carb)<=5&&
+    Math.abs(m.f-target.fat)<=3&&
+    Math.abs(m.p-target.prot)<=8&&
+    Math.abs(m.k-target.kcal)<=60;
+}
+
+function autoMaxFoodAmount(u,target){
+  const normal=maxFoodAmount(u.it.n,u.mi);
+  const d=u.d;
+  let practical=normal;
+  if(u.it.n==='米饭')practical=600;
+  else if(isStapleCarb(u.it.n))practical=500;
+  else if(isOatFood(u.it.n))practical=120;
+  else if(u.it.n.includes('面包')||u.it.n.includes('吐司'))practical=200;
+  else if(u.it.n==='坚果')practical=80;
+  else if(u.it.n==='食用油')practical=35;
+  else if(isYogurt(u.it.n))practical=300;
+  else if(isMilk(u.it.n))practical=600;
+  else if(d.cat==='prot')practical=350;
+  else if(d.cat==='fat')practical=300;
+  else if(d.custom&&d.cat==='carb')practical=500;
+  return Math.max(normal,practical);
+}
+
+function distributionBounds(u,target){
+  const hardKeep=u.it.keep&&!u.it.keepSoft;
+  const positiveMin=hardKeep?servingMinFoodAmount(u.it.n,u.mi):minFoodAmount(u.it.n,u.mi);
+  return{hardKeep,positiveMin,max:autoMaxFoodAmount(u,target)};
+}
+
+function clampDistributionRow(u,target){
+  const b=distributionBounds(u,target);
+  let val=Math.max(0,+u.it.g||0);
+  if(val>0)val=Math.min(Math.max(val,b.positiveMin),b.max);
+  else if(b.hardKeep)val=b.positiveMin;
+  u.it.g=roundFoodAmount(u.d,val);
+}
+
+function distributionCandidates(u,target){
+  const b=distributionBounds(u,target);
+  const step=u.d.unitG?1:5;
+  const values=[];
+  if(!b.hardKeep)values.push(0);
+  const first=Math.ceil(b.positiveMin/step)*step;
+  for(let value=first;value<=b.max;value+=step)values.push(value);
+  values.push(roundFoodAmount(u.d,Math.min(b.max,Math.max(b.positiveMin,+u.it.g||0))));
+  return[...new Set(values.filter(value=>Number.isFinite(value)&&value>=0&&value<=b.max))];
+}
+
 function tuneDistribution(di,items,target){
   const pool=items.filter(u=>u.d.cat!=='veg'&&u.d.k>0);
   if(!pool.length)return;
-  const stepFor=u=>u.d.unitG?1:5;
-  const canSet=(u,next)=>{
-    const min=u.it.keep&&!u.it.keepSoft?servingMinFoodAmount(u.it.n,u.mi):(u.it.g>0?minFoodAmount(u.it.n,u.mi):0);
-    return !(next<0||next>maxFoodAmount(u.it.n,u.mi)||(next>0&&next<min));
-  };
-  for(let pass=0;pass<240;pass++){
-    let best=null,base=distributeScore(di,target);
-    pool.forEach(u=>{
-      const stepSize=stepFor(u);
-      [-stepSize,stepSize].forEach(step=>{
-        const old=u.it.g,next=old+step;
-        if(!canSet(u,next))return;
-        u.it.g=next;
-        const sc=distributeScore(di,target);
-        u.it.g=old;
-        if(sc+0.001<base&&(!best||sc<best.sc))best={moves:[{u,step}],sc};
-      });
-    });
-    pool.forEach(a=>{
-      pool.forEach(b=>{
-        if(a===b)return;
-        const stepA=stepFor(a),stepB=stepFor(b);
-        [[-stepA,stepB],[stepA,-stepB]].forEach(([da,db])=>{
-          const oldA=a.it.g,oldB=b.it.g,nextA=oldA+da,nextB=oldB+db;
-          if(!canSet(a,nextA)||!canSet(b,nextB))return;
-          a.it.g=nextA;b.it.g=nextB;
-          const sc=distributeScore(di,target);
-          a.it.g=oldA;b.it.g=oldB;
-          if(sc+0.001<base&&(!best||sc<best.sc))best={moves:[{u:a,step:da},{u:b,step:db}],sc};
+  const candidates=pool.map(u=>distributionCandidates(u,target));
+  const score=()=>distributionGapScore(di,target)+distributeScore(di,target)*.2;
+  const read=()=>pool.map(u=>+u.it.g||0);
+  const write=values=>pool.forEach((u,i)=>{u.it.g=values[i];});
+  const optimize=()=>{
+    for(let pass=0;pass<12;pass++){
+      let changed=false;
+      const order=pass%2?pool.map((_,i)=>pool.length-1-i):pool.map((_,i)=>i);
+      order.forEach(i=>{
+        const u=pool[i],old=u.it.g;
+        let bestValue=old,bestScore=score();
+        candidates[i].forEach(value=>{
+          u.it.g=value;
+          const nextScore=score();
+          if(nextScore+0.0001<bestScore){bestScore=nextScore;bestValue=value;}
         });
+        u.it.g=bestValue;
+        if(bestValue!==old)changed=true;
       });
-    });
-    if(!best)break;
-    best.moves.forEach(m=>{
-      m.u.it.g=roundFoodAmount(m.u.d,m.u.it.g+m.step);
-      clampFoodRow(m.u.it,m.u.mi);
-    });
+      if(!changed||distributionIsBalanced(di,target))break;
+    }
+  };
+
+  const starting=read();
+  let bestValues=starting.slice(),bestScore=score();
+  let randomSeed=2166136261;
+  pool.forEach(u=>{for(const ch of `${u.it.n}:${u.mi}`)randomSeed=Math.imul(randomSeed^ch.charCodeAt(0),16777619);});
+  const random=()=>{
+    randomSeed^=randomSeed<<13;randomSeed^=randomSeed>>>17;randomSeed^=randomSeed<<5;
+    return(randomSeed>>>0)/4294967296;
+  };
+  const starts=14;
+  for(let run=0;run<starts;run++){
+    if(run===0)write(starting);
+    else if(run===1)write(candidates.map(values=>values[0]));
+    else if(run===2)write(candidates.map(values=>values[Math.floor((values.length-1)*.5)]));
+    else write(candidates.map(values=>values[Math.floor(random()*values.length)]));
+    optimize();
+    const nextScore=score();
+    if(nextScore+0.0001<bestScore){bestScore=nextScore;bestValues=read();}
+    if(distributionIsBalanced(di,target)){bestValues=read();break;}
   }
+  write(bestValues);
 }
 
 function macroAdjustPool(di,items,key){
@@ -1624,6 +1763,13 @@ function autoDistributeDay(di){
   const ratioTotal=usedMeals.reduce((s,mi)=>s+baseRatios[mi],0)||1;
   const mealRatio=baseRatios.map((r,mi)=>usedMeals.includes(mi)?r/ratioTotal:0);
   const dayTarget=tgt[wT[di]];
+  const original=unlocked.map(u=>({g:u.it.g,manual:u.it.manual}));
+  const beforeScore=distributionGapScore(di,dayTarget);
+
+  if(currentFormulaMode()!=='ding'&&distributionIsBalanced(di,dayTarget)){
+    renderDetail();
+    return;
+  }
 
   if(currentFormulaMode()==='ding'){
     autoDistributeCaloriesOnly(di,unlocked,dayTarget,mealRatio);
@@ -1642,7 +1788,7 @@ function autoDistributeDay(di){
     }else{
       u.it.g=0;
     }
-    clampFoodRow(u.it,u.mi);
+    clampDistributionRow(u,dayTarget);
     u.it.lk=0;
   });
 
@@ -1672,8 +1818,8 @@ function autoDistributeDay(di){
         const seed=d&&d.unitG?1:100;
         const share=(+it.g>0?+it.g:seed)/weightSum;
         it.g=roundFoodAmount(d,goal*share/macroPerAmount(d,gp.key));
-        clampFoodRow(it,mi);
-        keepFoodPositive(it,mi);
+        const u=unlocked.find(row=>row.it===it);
+        if(u)clampDistributionRow(u,dayTarget);
       });
     });
   });
@@ -1695,14 +1841,20 @@ function autoDistributeDay(di){
         const share=(gap>0?per:per*Math.max(1,u.it.g))/power;
         const deltaAmt=gap*share/per;
         u.it.g=roundFoodAmount(u.d,Math.max(0,u.it.g+deltaAmt));
-        clampFoodRow(u.it,u.mi);
-        keepFoodPositive(u.it,u.mi);
+        clampDistributionRow(u,dayTarget);
       });
     });
   }
 
   tuneDistribution(di,unlocked,dayTarget);
-  unlocked.forEach(u=>keepFoodPositive(u.it,u.mi));
+  unlocked.forEach(u=>clampDistributionRow(u,dayTarget));
+  if(distributionGapScore(di,dayTarget)>beforeScore+0.0001){
+    unlocked.forEach((u,i)=>{
+      u.it.g=original[i].g;
+      if(original[i].manual===undefined)delete u.it.manual;
+      else u.it.manual=original[i].manual;
+    });
+  }
   pruneZeroFoods(di);
 
   renderDetail();
@@ -1849,17 +2001,20 @@ function deleteFood(di,mi,fi){
   }
 }
 
-function openModal(di,mi){
+function openModal(di,mi,initialName=''){
   _mc={di,mi};
+  document.querySelector('#ov .modal').classList.remove('wide');
   document.getElementById('m-body').innerHTML=
     `<div class="mf"><label>选择食物</label><select id="m-food"></select></div>`+
     `<div class="mf"><label>数量 / 克 / 毫升</label><input id="m-gram" type="number" placeholder="100"/></div>`+
-    `<div class="mprev" id="m-prev">—</div>`;
+    `<div class="mprev" id="m-prev">—</div>`+
+    `<button class="add-own-food" type="button" onclick="openFoodHub({kind:'meal',di:${di},mi:${mi}})">＋ 食物库没有？添加新食物</button>`;
   document.getElementById('m-btns').innerHTML=
     `<button class="bsec" onclick="closeModal()">取消</button>`+
     `<button class="bpri" onclick="confirmAdd()">添加</button>`;
   const mf=document.getElementById('m-food');
-  mf.innerHTML=FN.map(n=>{const d=DB[n];return`<option value="${n}">${n}${d.raw?'('+d.raw+')':''} · ${d.k}kcal/100g</option>`;}).join('');
+  mf.innerHTML=FN.map(n=>{const d=DB[n];return`<option value="${escapeHtml(n)}">${escapeHtml(n)}${d.raw?'('+escapeHtml(d.raw)+')':''} · ${d.k}kcal/100${d.u||'g'}</option>`;}).join('');
+  if(initialName&&DB[initialName])mf.value=initialName;
   document.getElementById('m-gram').value=100;
   document.getElementById('m-ttl').textContent='添加到 '+MICONS[mi];
   const upd=()=>{
@@ -1875,7 +2030,439 @@ function openModal(di,mi){
   document.getElementById('m-gram').oninput=upd;upd();
   document.getElementById('ov').classList.add('open');
 }
-function closeModal(){document.getElementById('ov').classList.remove('open');_mc=null;window._pantryDraft=null;}
+
+function inferFoodCategory(c,f,p){
+  if(c<=8&&f<=3&&p<=5)return'veg';
+  if(f*9>=c*4&&f*9>=p*4)return'fat';
+  if(p*4>=c*4&&p*4>=f*9)return'prot';
+  return'carb';
+}
+
+function openFoodHub(context=null,editName=''){
+  foodHubContext=context||foodHubContext;
+  document.querySelector('#ov .modal').classList.add('wide');
+  document.getElementById('m-ttl').textContent='智能添加食物';
+  document.getElementById('m-body').innerHTML=
+    `<div id="foodHubPanel"></div><div id="customFoodLibrary"></div>`;
+  document.getElementById('m-btns').innerHTML=`<button class="bsec" onclick="closeModal()">关闭</button>`;
+  document.getElementById('ov').classList.add('open');
+  if(editName&&DB[editName]?.custom)renderFoodEditor({name:editName,...DB[editName]},editName);
+  else renderSmartFoodHome();
+}
+
+function foodFormHtml(food=null,originalName=''){
+  const x=food||{name:'',c:'',f:'',p:'',k:'',cat:'carb',u:'g',raw:'自定义/每100g',source:'手动录入'};
+  const review=[...(x.assumptions||[]),...(x.warnings||[])].filter(Boolean).slice(0,4).join('；');
+  return `<div class="source-note">数据来源：${escapeHtml(x.source||'手动录入')}。保存前请核对包装标签和“每100克/每100毫升”基准。${review?`<br><strong>需要核对：</strong>${escapeHtml(review)}`:''}</div><div class="food-form-grid">
+    <div class="mf wide-field"><label>食物名称</label><input id="cf-name" maxlength="80" value="${escapeHtml(x.name||'')}" placeholder="例如：低脂牛肉丸"/></div>
+    <div class="mf"><label>计算单位</label><select id="cf-unit"><option value="g" ${x.u!=='ml'?'selected':''}>每100克</option><option value="ml" ${x.u==='ml'?'selected':''}>每100毫升</option></select></div>
+    <div class="mf"><label>食物分类</label><select id="cf-cat"><option value="carb">主食/碳水</option><option value="prot">蛋白质</option><option value="fat">脂肪类</option><option value="veg">蔬菜</option><option value="oil">食用油</option></select></div>
+    <div class="mf"><label>碳水 g</label><input id="cf-c" type="number" min="0" step="0.1" value="${x.c??''}" oninput="updateFoodEnergyHint()"/></div>
+    <div class="mf"><label>脂肪 g</label><input id="cf-f" type="number" min="0" step="0.1" value="${x.f??''}" oninput="updateFoodEnergyHint()"/></div>
+    <div class="mf"><label>蛋白质 g</label><input id="cf-p" type="number" min="0" step="0.1" value="${x.p??''}" oninput="updateFoodEnergyHint()"/></div>
+    <div class="mf"><label>包装热量 kcal</label><input id="cf-k" type="number" min="0" step="0.1" value="${x.k??''}"/></div>
+    <div class="mf wide-field"><label>备注</label><input id="cf-raw" maxlength="120" value="${escapeHtml(x.raw||'')}" placeholder="例如：熟重/包装标签值"/></div>
+  </div>
+  <div class="food-form-help" id="foodEnergyHint">三大营养素换算热量：—</div>
+  <div class="form-error" id="foodFormError"></div>
+  <div class="food-hub-actions"><button class="bsec" type="button" onclick="clearFoodForm()">清空</button><button class="bpri" type="button" onclick="saveCustomFood()">保存到食物库</button></div>`;
+}
+
+function renderSmartFoodHome(message=''){
+  const panel=document.getElementById('foodHubPanel');if(!panel)return;
+  window._editingFoodName='';window._foodDraftSource='';window._foodDraftSourceId='';window._onlineFoodResults=[];
+  panel.innerHTML=`<div class="food-search-row"><input id="smartFoodQuery" placeholder="食物名称或包装条码" onkeydown="if(event.key==='Enter')smartFoodTextSubmit()"/><button class="bpri" type="button" onclick="smartFoodTextSubmit()">识别</button></div>
+    <div class="smart-food-or">或者拍一张照片</div>
+    <label class="upload-box">📷 拍照或选择图片<input id="smartFoodPhoto" type="file" accept="image/*" capture="environment" onchange="smartFoodPhoto(this.files[0])"/></label>
+    <div class="smart-photo-help">食物照片、包装条码、营养成分表都从这里进入</div>
+    <img class="ocr-preview" id="smartPreview" alt="待识别照片预览"/>
+    <div class="food-status" id="smartFoodStatus">${escapeHtml(message||'AI会自动判断食物、条码或营养表；结果需要你确认后才会保存。照片仅用于本次识别，不会存进食物库。')}</div>
+    <div class="food-results" id="smartFoodResults"></div>
+    <button class="smart-manual-link" type="button" onclick="renderFoodEditor()">无法识别？手动填写营养数据</button>`;
+  renderCustomFoodLibrary();
+}
+
+// 兼容旧按钮或旧缓存中的调用，界面仍统一回到一个入口。
+function showFoodHubTab(tab,editName=''){
+  if(tab==='manual'){
+    const food=editName&&DB[editName]?.custom?{name:editName,...DB[editName]}:null;
+    renderFoodEditor(food,editName);
+  }else renderSmartFoodHome();
+}
+
+function renderFoodEditor(food=null,originalName=''){
+  const panel=document.getElementById('foodHubPanel');if(!panel)return;
+  const x=food||null;
+  window._editingFoodName=originalName||'';
+  window._foodDraftSource=x?.source||'手动录入';
+  window._foodDraftSourceId=x?.sourceId||'';
+  panel.innerHTML=`<button class="mini-btn" type="button" onclick="renderSmartFoodHome()">← 返回智能识别</button><div style="height:8px"></div>`+foodFormHtml(x,originalName);
+  if(x)document.getElementById('cf-cat').value=x.cat||inferFoodCategory(+x.c||0,+x.f||0,+x.p||0);
+  updateFoodEnergyHint();
+}
+
+function normalizeOnlineProduct(product){
+  const n=product?.nutriments||{};
+  const c=+n.carbohydrates_100g||0,f=+n.fat_100g||0,p=+n.proteins_100g||0;
+  let k=+n['energy-kcal_100g']||0;
+  if(!k&&+n['energy-kj_100g'])k=+n['energy-kj_100g']/4.184;
+  const name=String(product.product_name_zh||product.product_name||product.generic_name_zh||product.generic_name||'').trim();
+  if(!name||(!k&&!c&&!f&&!p))return null;
+  return{name:name.slice(0,80),brand:String(product.brands||'').slice(0,80),c:+c.toFixed(1),f:+f.toFixed(1),p:+p.toFixed(1),k:+k.toFixed(1),cat:inferFoodCategory(c,f,p),u:'g',raw:'包装数据/每100g',source:'Open Food Facts',sourceId:String(product.code||'')};
+}
+
+function smartFoodElements(){return{status:document.getElementById('smartFoodStatus'),box:document.getElementById('smartFoodResults')};}
+
+function getFoodAiAccessToken(){
+  let token='';
+  try{token=localStorage.getItem(FOOD_AI_ACCESS_KEY)||'';}catch(e){}
+  if(token)return token;
+  token=String(prompt('首次使用请输入碳循环 AI 识别码（只需输入一次）')||'').trim();
+  if(!token){const error=new Error('没有输入识别码，已取消 AI 识别。');error.code='ACCESS_CANCELLED';throw error;}
+  try{localStorage.setItem(FOOD_AI_ACCESS_KEY,token);}catch(e){}
+  return token;
+}
+
+async function callFoodAi(payload){
+  const token=getFoodAiAccessToken();
+  let response;
+  try{
+    response=await fetch(FOOD_AI_ENDPOINT,{
+      method:'POST',
+      headers:{'Authorization':`Bearer ${token}`,'Content-Type':'application/json'},
+      body:JSON.stringify(payload),
+    });
+  }catch(e){const error=new Error('暂时无法连接腾讯云 AI 识别，请检查网络后重试。');error.code='NETWORK';throw error;}
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok){
+    if(response.status===401){try{localStorage.removeItem(FOOD_AI_ACCESS_KEY);}catch(e){}}
+    const error=new Error(data.error||`AI 识别失败（${response.status}）`);error.code=data.code||`HTTP_${response.status}`;throw error;
+  }
+  if(!data.food)throw new Error('AI 没有返回可用的食物数据。');
+  return data;
+}
+
+function foodFromAiResponse(data){
+  const x=data.food||{};
+  const c=Number(x.c),f=Number(x.f),p=Number(x.p),k=Number(x.k);
+  if(!x.name||[c,f,p,k].some(v=>!Number.isFinite(v)||v<0))throw new Error('AI 返回的营养数据不完整，请重试。');
+  return{
+    name:String(x.name).slice(0,80),brand:String(x.brand||'').slice(0,80),
+    c:+c.toFixed(1),f:+f.toFixed(1),p:+p.toFixed(1),k:+k.toFixed(1),
+    cat:inferFoodCategory(c,f,p),u:x.u==='ml'?'ml':'g',
+    raw:String(x.raw||`AI识别/每100${x.u==='ml'?'ml':'g'}`).slice(0,120),
+    source:String(x.source||'腾讯云AI识别').slice(0,80),sourceId:String(data.requestId||x.barcode||'').slice(0,100),
+    assumptions:Array.isArray(x.assumptions)?x.assumptions:[],warnings:Array.isArray(x.warnings)?x.warnings:[],
+  };
+}
+
+function useFoodAiResponse(data){
+  const food=foodFromAiResponse(data);
+  renderFoodEditor(food,'');
+}
+
+async function fileToAiDataUrl(file){
+  if(!/^image\/(?:jpeg|png|webp)$/i.test(file.type||''))throw new Error('请选择 JPG、PNG 或 WebP 图片。');
+  if(file.size>15*1024*1024)throw new Error('照片太大，请换一张或先裁剪。');
+  const bitmap=await createImageBitmap(file,{imageOrientation:'from-image'});
+  const maxSide=1800,scale=Math.min(1,maxSide/Math.max(bitmap.width,bitmap.height));
+  const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(bitmap.width*scale));canvas.height=Math.max(1,Math.round(bitmap.height*scale));
+  const ctx=canvas.getContext('2d',{alpha:false});ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close?.();
+  let dataUrl=canvas.toDataURL('image/jpeg',.88);
+  if(dataUrl.length>5.4*1024*1024){
+    const smaller=document.createElement('canvas'),smallScale=Math.min(1,1400/Math.max(canvas.width,canvas.height));
+    smaller.width=Math.max(1,Math.round(canvas.width*smallScale));smaller.height=Math.max(1,Math.round(canvas.height*smallScale));
+    const smallerCtx=smaller.getContext('2d',{alpha:false});smallerCtx.fillStyle='#fff';smallerCtx.fillRect(0,0,smaller.width,smaller.height);smallerCtx.drawImage(canvas,0,0,smaller.width,smaller.height);
+    dataUrl=smaller.toDataURL('image/jpeg',.78);
+  }
+  return dataUrl;
+}
+
+function findKnownFoods(query){
+  const q=String(query||'').trim().toLowerCase().replace(/\s+/g,'');if(!q)return[];
+  const alias=FOOD_ALIASES[query];
+  return FN.filter(name=>{
+    const hay=`${name}${DB[name]?.raw||''}`.toLowerCase().replace(/\s+/g,'');
+    return name===alias||hay.includes(q);
+  }).slice(0,12);
+}
+
+function renderKnownFoods(names){
+  const {status,box}=smartFoodElements();if(!status||!box)return;
+  window._knownFoodResults=names;
+  status.textContent=`已在现有食物库找到 ${names.length} 项，可直接使用。`;
+  box.innerHTML=names.map((name,i)=>{const x=DB[name];return`<button class="food-result" type="button" onclick="useKnownFoodAt(${i})"><span><span class="food-result-name">${escapeHtml(name)}</span><span class="food-result-brand">现有食物库 · 每100${escapeHtml(x.u||'g')}</span><span class="food-result-macro">碳${x.c}g · 脂${x.f}g · 蛋${x.p}g</span></span><span class="food-result-kcal">${Math.round(x.k)} kcal</span></button>`;}).join('');
+}
+
+function useKnownFoodAt(i){
+  const name=(window._knownFoodResults||[])[i];if(!name)return;
+  const ctx=foodHubContext;
+  if(ctx?.kind==='meal'){const{di,mi}=ctx;closeModal();openModal(di,mi,name);return;}
+  if(ctx?.kind==='pantry'){pantryFoods[ctx.di]=[...new Set([...(pantryFoods[ctx.di]||[]),name])];closeModal();renderDetail();return;}
+  const {status}=smartFoodElements();if(status)status.textContent=`“${name}”已经在食物库中，不需要重复保存。`;
+}
+
+async function smartFoodTextSubmit(){
+  const input=document.getElementById('smartFoodQuery');
+  const value=String(input?.value||'').trim();
+  const {status,box}=smartFoodElements();
+  if(!value){if(status)status.textContent='请输入食物名称或包装条码。';return;}
+  const known=findKnownFoods(value);if(known.length){renderKnownFoods(known);return;}
+  status.textContent='正在通过腾讯云 AI 自动识别…';if(box)box.innerHTML='';
+  try{useFoodAiResponse(await callFoodAi({query:value}));}
+  catch(e){
+    if(['UNAUTHORIZED','ACCESS_CANCELLED'].includes(e.code)){status.textContent=e.message;return;}
+    const digits=value.replace(/[\s-]/g,'');
+    if(/^\d{8,14}$/.test(digits))await lookupBarcode(digits);
+    else await searchOnlineFoods(value,e.message);
+  }
+}
+
+async function searchOnlineFoods(query='',fallbackMessage=''){
+  const q=String(query||document.getElementById('smartFoodQuery')?.value||'').trim();
+  const {status,box}=smartFoodElements();
+  if(!status||!box)return;
+  if(!q){status.textContent='请先输入品牌或食物名称。';return;}
+  const known=findKnownFoods(q);if(known.length){renderKnownFoods(known);return;}
+  status.textContent=fallbackMessage?'AI 暂时不可用，正在改用公开食物数据库…':'正在联网搜索…';box.innerHTML='';
+  try{
+    const url=`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=12&fields=code,product_name,product_name_zh,generic_name,generic_name_zh,brands,nutriments`;
+    const response=await fetch(url,{headers:{'Accept':'application/json'}});
+    if(!response.ok)throw new Error('HTTP '+response.status);
+    const json=await response.json();
+    const rows=(json.products||[]).map(normalizeOnlineProduct).filter(Boolean);
+    window._onlineFoodResults=rows;
+    status.textContent=rows.length?`已判断为食物名称，找到 ${rows.length} 个结果。请选择最接近的一项。`:'没有找到可用营养数据。可以拍包装营养表，或手动填写。';
+    box.innerHTML=rows.map((x,i)=>`<button class="food-result" type="button" onclick="useOnlineFoodAt(${i})"><span><span class="food-result-name">${escapeHtml(x.name)}</span><span class="food-result-brand">${escapeHtml(x.brand||'未标品牌')} · 每100g</span><span class="food-result-macro">碳${x.c}g · 脂${x.f}g · 蛋${x.p}g</span></span><span class="food-result-kcal">${Math.round(x.k)} kcal</span></button>`).join('');
+  }catch(e){status.textContent='联网搜索失败，请稍后重试，或拍营养表/手动填写。';}
+}
+
+function useOnlineFoodAt(i){
+  const x=(window._onlineFoodResults||[])[i];if(!x)return;
+  renderFoodEditor(x,'');
+}
+
+async function lookupBarcode(code=''){
+  const input=document.getElementById('smartFoodQuery');
+  const value=String(code||input?.value||'').replace(/\D/g,'');
+  const {status,box}=smartFoodElements();
+  if(!status||!box)return false;
+  if(!value){status.textContent='请输入或拍摄商品条码。';return false;}
+  if(input)input.value=value;status.textContent='正在查询条码…';box.innerHTML='';
+  try{
+    const response=await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(value)}.json?fields=code,product_name,product_name_zh,generic_name,generic_name_zh,brands,nutriments`,{headers:{'Accept':'application/json'}});
+    if(!response.ok)throw new Error('HTTP '+response.status);
+    const json=await response.json();const x=normalizeOnlineProduct(json.product);
+    if(!x){status.textContent='没有找到这个条码，建议拍营养成分表。';return false;}
+    window._onlineFoodResults=[x];status.textContent='已判断为包装条码，并找到商品。请核对后使用。';
+    box.innerHTML=`<button class="food-result" type="button" onclick="useOnlineFoodAt(0)"><span><span class="food-result-name">${escapeHtml(x.name)}</span><span class="food-result-brand">${escapeHtml(x.brand||'未标品牌')} · 条码 ${escapeHtml(value)}</span><span class="food-result-macro">碳${x.c}g · 脂${x.f}g · 蛋${x.p}g</span></span><span class="food-result-kcal">${Math.round(x.k)} kcal</span></button>`;return true;
+  }catch(e){status.textContent='条码查询失败，请检查网络后重试。';return false;}
+}
+
+async function detectBarcodeInPhoto(file){
+  if(!('BarcodeDetector'in window))return'';
+  try{
+    const formats=await BarcodeDetector.getSupportedFormats?.()||[];
+    const wanted=['ean_13','ean_8','upc_a','upc_e','code_128'].filter(x=>!formats.length||formats.includes(x));
+    const bitmap=await createImageBitmap(file);const detector=new BarcodeDetector(wanted.length?{formats:wanted}:undefined);
+    const codes=await detector.detect(bitmap);bitmap.close?.();
+    return String(codes[0]?.rawValue||'').replace(/\D/g,'');
+  }catch(e){return'';}
+}
+
+function normalizeOcrText(text){
+  const fw='０１２３４５６７８９．：％';const hw='0123456789.:%';
+  return String(text||'').replace(/[０-９．：％]/g,ch=>hw[fw.indexOf(ch)]).replace(/,/g,'.');
+}
+
+function parseNutritionLabel(text){
+  const clean=normalizeOcrText(text).replace(/[|｜]/g,' ');
+  const numberAfter=labels=>{
+    const m=clean.match(new RegExp(`(?:${labels})\\s*[:：]?\\s*(\\d+(?:\\.\\d+)?)\\s*(?:g|克)?`,'i'));
+    return m?+m[1]:0;
+  };
+  const c=numberAfter('碳水化合物|碳水|carbohydrates?');
+  const f=numberAfter('脂肪|fat');
+  const p=numberAfter('蛋白质|protein');
+  const energy=clean.match(/(?:能量|热量|energy)\s*[:：]?\s*(\d+(?:\.\d+)?)\s*(kcal|千卡|kj|千焦)?/i);
+  let k=energy?+energy[1]:0;const unit=(energy?.[2]||'').toLowerCase();
+  if(unit==='kj'||unit==='千焦'||(!unit&&k>900))k=k/4.184;
+  if(!k&&(c||f||p))k=c*4+f*9+p*4;
+  const u=/100\s*(?:ml|毫升)/i.test(clean)?'ml':'g';
+  return{name:'',c:+c.toFixed(1),f:+f.toFixed(1),p:+p.toFixed(1),k:+k.toFixed(1),cat:inferFoodCategory(c,f,p),u,raw:`营养表照片/每100${u}`,source:'营养表照片OCR',sourceId:'',ocrText:clean};
+}
+
+function ensureTesseract(){
+  if(window.Tesseract)return Promise.resolve(window.Tesseract);
+  if(window._tesseractPromise)return window._tesseractPromise;
+  window._tesseractPromise=new Promise((resolve,reject)=>{
+    const script=document.createElement('script');script.src='https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.min.js';script.crossOrigin='anonymous';script.integrity='sha384-2BQ3U3OdKOb0Uczxqr41I9UvZkzr4V9Hv8uSzMMZAlmhsFClvdZX5wi5fDCzG+tM';
+    script.onload=()=>resolve(window.Tesseract);script.onerror=()=>reject(new Error('OCR library load failed'));document.head.appendChild(script);
+  });
+  return window._tesseractPromise;
+}
+
+function nutritionTextScore(text){
+  const s=normalizeOcrText(text);return['营养成分','能量','热量','碳水','蛋白质','脂肪','nutrition','energy','carbohydrate','protein','fat'].filter(x=>s.toLowerCase().includes(x.toLowerCase())).length;
+}
+
+function renderFoodPhotoAssist(){
+  const {status,box}=smartFoodElements();if(!status||!box)return;
+  status.textContent='已判断为普通食物照片。请确认食物名称，系统再联网估算营养；照片无法准确判断重量和烹调用油。';
+  box.innerHTML=`<div class="food-search-row"><input id="photoFoodName" placeholder="例如：番茄炒蛋" onkeydown="if(event.key==='Enter')searchFoodPhotoName()"/><button class="bpri" type="button" onclick="searchFoodPhotoName()">继续</button></div>`;
+  document.getElementById('photoFoodName')?.focus();
+}
+
+function searchFoodPhotoName(){
+  const value=String(document.getElementById('photoFoodName')?.value||'').trim();
+  const main=document.getElementById('smartFoodQuery');if(main)main.value=value;
+  searchOnlineFoods(value);
+}
+
+async function smartFoodPhoto(file){
+  if(!file)return;
+  const {status,box}=smartFoodElements(),preview=document.getElementById('smartPreview');
+  if(!status||!box)return;
+  const previewUrl=URL.createObjectURL(file);preview.src=previewUrl;preview.style.display='block';box.innerHTML='';
+  status.textContent='正在判断照片类型…';
+  const barcode=await detectBarcodeInPhoto(file);
+  if(barcode&&await lookupBarcode(barcode)){URL.revokeObjectURL(previewUrl);return;}
+  status.textContent='正在通过腾讯云 AI 识别食物、条码或营养表…';
+  try{
+    const imageDataUrl=await fileToAiDataUrl(file);
+    useFoodAiResponse(await callFoodAi({imageDataUrl,fileName:String(file.name||'photo').slice(0,120)}));
+    URL.revokeObjectURL(previewUrl);return;
+  }catch(e){
+    status.textContent=`${e.message} 正在改用本地识别…`;
+  }
+  await smartFoodPhotoFallback(file,previewUrl);
+}
+
+async function smartFoodPhotoFallback(file,previewUrl){
+  const {status}=smartFoodElements();
+  status.textContent='未发现条码，正在检查是否为营养成分表…首次使用可能需要几十秒。';
+  let worker=null;
+  try{
+    const T=await ensureTesseract();
+    worker=await T.createWorker(['chi_sim','eng'],1,{logger:m=>{if(m.status==='recognizing text')status.textContent=`正在分析照片… ${Math.round((m.progress||0)*100)}%`;}});
+    const ret=await worker.recognize(file,{rotateAuto:true});
+    const rawText=normalizeOcrText(ret.data.text);
+    const ocrBarcode=(rawText.match(/(?:^|\D)(\d{8,14})(?:\D|$)/)||[])[1]||'';
+    if(ocrBarcode){await lookupBarcode(ocrBarcode);return;}
+    const draft=parseNutritionLabel(rawText);
+    if(nutritionTextScore(rawText)>=2&&(draft.c||draft.f||draft.p||draft.k)){
+      status.textContent='已判断为营养成分表，并提取了数据。请逐项核对包装后再保存。';
+      renderFoodEditor(draft,'');return;
+    }
+    renderFoodPhotoAssist();
+  }catch(e){
+    renderFoodPhotoAssist();
+    status.textContent='没有读到条码或营养表，已按普通食物照片处理。请确认名称后继续。';
+  }finally{URL.revokeObjectURL(previewUrl);try{await worker?.terminate();}catch(e){}}
+}
+
+async function scanBarcodePhoto(file){return smartFoodPhoto(file);}
+async function recognizeNutritionPhoto(file){return smartFoodPhoto(file);}
+
+function updateFoodEnergyHint(){
+  const c=+document.getElementById('cf-c')?.value||0,f=+document.getElementById('cf-f')?.value||0,p=+document.getElementById('cf-p')?.value||0;
+  const el=document.getElementById('foodEnergyHint');if(el)el.textContent=`三大营养素换算热量约 ${Math.round(c*4+f*9+p*4)} kcal；包装标签可能因纤维和四舍五入略有不同。`;
+}
+
+function clearFoodForm(){renderFoodEditor();}
+
+function showFoodFormError(message){
+  const el=document.getElementById('foodFormError');if(!el)return;
+  el.textContent=message;el.style.display=message?'block':'none';
+}
+
+function saveCustomFood(){
+  const originalName=window._editingFoodName||'';
+  const name=String(document.getElementById('cf-name')?.value||'').trim().replace(/[<>]/g,'').slice(0,80);
+  const c=+document.getElementById('cf-c')?.value,f=+document.getElementById('cf-f')?.value,p=+document.getElementById('cf-p')?.value,k=+document.getElementById('cf-k')?.value;
+  const u=document.getElementById('cf-unit')?.value==='ml'?'ml':'g';
+  const cat=document.getElementById('cf-cat')?.value||inferFoodCategory(c,f,p);
+  let raw=String(document.getElementById('cf-raw')?.value||'').trim().slice(0,120);
+  if(!raw||/^自定义\/每100(?:g|ml)$/.test(raw))raw=`自定义/每100${u}`;
+  if(!name){showFoodFormError('请填写食物名称。');return;}
+  if([c,f,p,k].some(v=>!Number.isFinite(v)||v<0)){showFoodFormError('请完整填写碳水、脂肪、蛋白质和热量，数值不能小于0。');return;}
+  if(c>100||f>100||p>100){showFoodFormError(`每100${u}的单项营养不能超过100克。`);return;}
+  if(DB[name]&&name!==originalName){showFoodFormError('这个名称已经存在，请换一个名称，或在下方直接编辑原食物。');return;}
+  const record={name,c,f,p,k,cat,u,raw,custom:1,source:window._foodDraftSource||'手动录入',sourceId:window._foodDraftSourceId||'',savedAt:new Date().toISOString()};
+  if(originalName&&originalName!==name&&DB[originalName]?.custom)delete DB[originalName];
+  const oldIndex=customFoods.findIndex(x=>x.name===originalName||x.name===name);
+  if(oldIndex>=0)customFoods[oldIndex]=record;else customFoods.push(record);
+  DB[name]={...record};refreshFoodNames();
+  if(!saveCustomFoods())return;
+  finishFoodSave(name,originalName);
+}
+
+function finishFoodSave(name,oldName=''){
+  if(oldName&&oldName!==name){
+    meals.forEach(day=>day.forEach(meal=>meal.forEach(it=>{if(it.n===oldName)it.n=name;})));
+    pantryFoods=pantryFoods.map(list=>list.map(n=>n===oldName?name:n));
+    const templates=loadMealTemplates();
+    Object.values(templates).forEach(pack=>Object.values(pack||{}).forEach(list=>(list||[]).forEach(tpl=>(tpl.meals||[]).forEach(meal=>(meal||[]).forEach(it=>{if(it.n===oldName)it.n=name;})))));
+    saveMealTemplates(templates);
+  }
+  const ctx=foodHubContext;
+  if(ctx?.kind==='pantry'){
+    pantryFoods[ctx.di]=[...new Set([...(pantryFoods[ctx.di]||[]),name])];
+    closeModal();renderDetail();return;
+  }
+  if(ctx?.kind==='meal'){
+    const {di,mi}=ctx;closeModal();openModal(di,mi,name);return;
+  }
+  renderSmartFoodHome(`“${name}”已保存到我的食物库。`);
+}
+
+function renderCustomFoodLibrary(){
+  const box=document.getElementById('customFoodLibrary');if(!box)return;
+  const list=customFoods.slice().sort((a,b)=>a.name.localeCompare(b.name,'zh-CN'));
+  box.innerHTML=`<div class="food-library-head"><div class="food-library-title">我的食物（${list.length}）</div><div class="food-library-tools"><button class="mini-btn" type="button" onclick="exportCustomFoods()">导出</button><label class="mini-btn">导入<input type="file" accept="application/json,.json" style="display:none" onchange="importCustomFoods(this.files[0])"/></label></div></div>`+
+    (list.length?`<div class="custom-food-list">${list.map((x,i)=>`<div class="custom-food-row"><div class="custom-food-main"><div class="custom-food-name">${escapeHtml(x.name)}</div><div class="custom-food-meta">每100${x.u} · ${Math.round(x.k)}kcal · 碳${x.c} 脂${x.f} 蛋${x.p}</div></div><div class="custom-food-btns"><button class="mini-btn" type="button" onclick="editCustomFoodAt(${i})">编辑</button><button class="mini-btn" type="button" onclick="deleteCustomFoodAt(${i})">删除</button></div></div>`).join('')}</div>`:'<div class="custom-food-empty">还没有自己的食物，保存后会出现在这里。</div>');
+  window._sortedCustomFoods=list;
+}
+
+function editCustomFoodAt(i){const x=(window._sortedCustomFoods||[])[i];if(x)renderFoodEditor(x,x.name);}
+function templatesUseFood(name){
+  const data=loadMealTemplates();
+  return Object.values(data).some(pack=>Object.values(pack||{}).some(list=>(list||[]).some(tpl=>(tpl.meals||[]).some(meal=>(meal||[]).some(it=>it.n===name)))));
+}
+function deleteCustomFoodAt(i){
+  const x=(window._sortedCustomFoods||[])[i];if(!x)return;
+  const inUse=meals.some(day=>day.some(meal=>meal.some(it=>it.n===x.name)))||templatesUseFood(x.name);
+  if(inUse){alert('这个食物正在当前餐单或已保存模板中使用，请先移除后再删除。');return;}
+  if(!confirm(`确定删除“${x.name}”吗？`))return;
+  customFoods=customFoods.filter(y=>y.name!==x.name);delete DB[x.name];refreshFoodNames();
+  pantryFoods=pantryFoods.map(list=>list.filter(n=>n!==x.name));saveCustomFoods();renderCustomFoodLibrary();
+}
+
+function exportCustomFoods(){
+  const payload={version:1,exportedAt:new Date().toISOString(),foods:customFoods};
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`BENLEE-食物库-${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+
+async function importCustomFoods(file){
+  if(!file)return;
+  try{
+    const json=JSON.parse(await file.text());const rows=Array.isArray(json)?json:json.foods;
+    if(!Array.isArray(rows))throw new Error('invalid');
+    let added=0,updated=0,skipped=0;
+    rows.forEach(raw=>{
+      const name=String(raw?.name||'').trim().replace(/[<>]/g,'').slice(0,80);
+      const nums=[+raw?.c,+raw?.f,+raw?.p,+raw?.k];
+      if(!name||nums.some(v=>!Number.isFinite(v)||v<0)||nums.slice(0,3).some(v=>v>100)||BUILTIN_FOOD_NAMES.includes(name)){skipped++;return;}
+      const record={name,c:nums[0],f:nums[1],p:nums[2],k:nums[3],cat:['carb','prot','fat','veg','oil'].includes(raw.cat)?raw.cat:inferFoodCategory(...nums.slice(0,3)),u:raw.u==='ml'?'ml':'g',raw:String(raw.raw||'导入/每100g').slice(0,120),custom:1,source:String(raw.source||'导入').slice(0,80),sourceId:String(raw.sourceId||'').slice(0,100),savedAt:raw.savedAt||new Date().toISOString()};
+      const idx=customFoods.findIndex(x=>x.name===name);if(idx>=0){customFoods[idx]=record;updated++;}else{customFoods.push(record);added++;}
+      DB[name]={...record};
+    });
+    refreshFoodNames();saveCustomFoods();renderCustomFoodLibrary();alert(`导入完成：新增 ${added}，更新 ${updated}，跳过 ${skipped}。`);
+  }catch(e){alert('导入失败：请选择由本页面导出的食物库 JSON 文件。');}
+}
+
+function closeModal(){document.getElementById('ov').classList.remove('open');document.querySelector('#ov .modal').classList.remove('wide');_mc=null;window._pantryDraft=null;window._editingFoodName='';window._foodDraftSource='';window._foodDraftSourceId='';foodHubContext=null;}
 function confirmAdd(){
   const name=document.getElementById('m-food').value;const g=+document.getElementById('m-gram').value||0;
   if(!name||g<=0){alert('请选择食物并填写克重');return;}
