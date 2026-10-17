@@ -72,6 +72,13 @@ body{background:var(--bg);min-height:100vh;-webkit-font-smoothing:antialiased;}
 .srow{display:grid;grid-template-columns:auto 1fr auto 1fr;align-items:center;gap:8px;margin-bottom:10px;padding:10px;background:var(--sur);border:1px solid var(--bd);border-radius:14px;font-size:12px;color:var(--tx2);}
 .ssel{height:34px;padding:5px 8px;border:1px solid var(--bd);border-radius:10px;font-size:13px;background:var(--sur);outline:none;min-width:0;}
 .hint{grid-column:1/-1;font-size:11px;color:var(--tx3);line-height:1.4;}
+.flex-checkin{grid-column:1/-1;display:none;grid-template-columns:auto auto auto 1fr;gap:7px;align-items:center;padding-top:9px;border-top:1px solid var(--bd);}
+.flex-checkin.show{display:grid;}
+.flex-title{font-size:12px;font-weight:800;color:var(--tx);white-space:nowrap;}
+.flex-choice{height:34px;padding:0 12px;border:1px solid var(--bd);border-radius:999px;background:var(--sur);color:var(--tx2);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;}
+.flex-choice.train.on{border-color:var(--hi-bd);background:var(--hi-bg);color:var(--hi);box-shadow:0 0 0 2px rgba(26,158,110,.10);}
+.flex-choice.rest.on{border-color:var(--lo-bd);background:var(--lo-bg);color:var(--lo);box-shadow:0 0 0 2px rgba(212,87,47,.08);}
+.flex-budget{font-size:10px;color:var(--tx3);line-height:1.45;text-align:right;}
 
 .det{background:var(--sur);border:1px solid rgba(226,226,222,.9);border-radius:18px;overflow:visible;box-shadow:0 8px 24px rgba(0,0,0,.05);}
 .day-sticky{position:sticky;top:var(--app-header-height);z-index:40;background:rgba(255,255,255,.94);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-radius:18px 18px 0 0;}
@@ -271,6 +278,9 @@ body{background:var(--bg);min-height:100vh;-webkit-font-smoothing:antialiased;}
   .dc{min-height:72px;padding-top:7px;}
   .srow{grid-template-columns:auto 1fr;gap:7px 8px;}
   .hint{grid-column:1/-1;}
+  .flex-checkin{grid-template-columns:1fr 1fr;}
+  .flex-title,.flex-budget{grid-column:1/-1;text-align:left;}
+  .flex-choice{width:100%;}
   .food-row{grid-template-columns:8px minmax(78px,1fr) 24px 54px 24px 14px minmax(40px,auto) 28px 28px;gap:4px;padding:7px 6px;}
   .pantry-row{grid-template-columns:1fr;}
   .pantry-btn{width:100%;}
@@ -311,7 +321,7 @@ body{background:var(--bg);min-height:100vh;-webkit-font-smoothing:antialiased;}
     <div class="ff"><label>年龄</label><input id="i-age" type="number" min="18" max="100" placeholder="42" oninput="scheduleRecalculate()"/></div>
     <div class="ff"><label>身高 cm</label><input id="i-h" type="number" min="120" max="230" placeholder="164" oninput="scheduleRecalculate()"/></div>
     <div class="ff"><label>体重 kg</label><input id="i-w" type="number" min="30" max="300" step="0.1" placeholder="48" oninput="scheduleRecalculate()"/></div>
-    <div class="ff"><label>日常活动</label><select id="i-activity" onchange="calcUser()"><option value="1.2">久坐少动 ×1.20</option><option value="1.375" selected>轻度活动 ×1.375</option><option value="1.55">中等活动 ×1.55</option><option value="1.725">高度活动 ×1.725</option></select></div>
+    <div class="ff"><label>日常活动（不含当天训练）</label><select id="i-activity" onchange="calcUser()"><option value="1.2">久坐少动 ×1.20</option><option value="1.375" selected>轻度活动 ×1.375</option><option value="1.55">中等活动 ×1.55</option><option value="1.725">高度活动 ×1.725</option></select></div>
   </div>
   <div class="profiles" id="profiles"></div>
   <button class="btn-calc" onclick="calcUser()">计算每日目标</button>
@@ -326,22 +336,29 @@ body{background:var(--bg);min-height:100vh;-webkit-font-smoothing:antialiased;}
 
 <div class="sec-head"><div class="sec" id="planSecTitle">一周碳水安排</div><button class="today-jump" onclick="selectDay(todayIndex())">查看今天</button></div>
 <div class="srow">
-  <span>开始日</span>
+  <span id="startDayLabel">开始日</span>
   <select class="ssel" id="startDay" onchange="applyTrainingPlan()">
     <option value="0">周一</option><option value="1">周二</option><option value="2">周三</option>
     <option value="3">周四</option><option value="4">周五</option><option value="5">周六</option><option value="6">周日</option>
   </select>
-  <span>开始状态</span>
+  <span id="startModeLabel">开始状态</span>
   <select class="ssel" id="startMode" onchange="applyTrainingPlan()">
     <option value="train">训练日</option>
     <option value="rest">休息日</option>
   </select>
   <span>计划</span>
   <select class="ssel" id="trainingPlan" onchange="applyTrainingPlan()">
+    <option value="flex">灵活安排（每天确认）</option>
     <option value="3">一周3练</option>
     <option value="6">一周6练</option>
   </select>
   <span class="hint" id="planHint">自动按一周3练排为 2高3中2低；右键可微调</span>
+  <div class="flex-checkin" id="flexCheckin">
+    <span class="flex-title">今天练不练？</span>
+    <button class="flex-choice train" id="flexTrainBtn" type="button" onclick="setFlexToday('train')">🏋️ 今天训练</button>
+    <button class="flex-choice rest" id="flexRestBtn" type="button" onclick="setFlexToday('rest')">🌿 今天休息</button>
+    <span class="flex-budget" id="flexBudget"></span>
+  </div>
 </div>
 <div class="week" id="week"></div>
 
@@ -459,7 +476,7 @@ const TORD=['high','mid','low'];
 const DING_TORD=['train','rest'];
 const TM={
   high:{lbl:'高碳',cls:'lH',c:'H'},mid:{lbl:'中碳',cls:'lM',c:'M'},low:{lbl:'低碳',cls:'lL',c:'L'},
-  train:{lbl:'运动',cls:'lH',c:'H'},rest:{lbl:'非运动',cls:'lL',c:'L'}
+  train:{lbl:'高碳',cls:'lH',c:'H'},rest:{lbl:'低碳',cls:'lL',c:'L'},pending:{lbl:'待确认',cls:'lM',c:'M'}
 };
 const TRAINING_PLANS={
   '3':{
@@ -475,10 +492,12 @@ const TRAINING_PLANS={
 };
 const PROFILE_KEY='benlee_carb_profiles_v8';
 const MEAL_TPL_KEY='benlee_carb_meal_templates_v8';
+const FLEX_PLAN_KEY='benlee_carb_flexible_week_v1';
 
 let tgt={high:{kcal:1403,carb:159,fat:47,prot:86},mid:{kcal:1247,carb:90,fat:60,prot:86},low:{kcal:1091,carb:37,fat:66,prot:86}};
 let wT=['mid','high','mid','high','low','mid','low'];
 let dMode=['休息','训练','休息','训练','休息','休息','休息'];
+let dayTargets=Array(7).fill(null);let flexState=null;
 let selDay=0;let setupOpen=true;let meals=buildMeals();let _mc=null;let activeProfile=0;
 let pantryFoods=Array.from({length:7},()=>[]);
 let foodHubContext=null;
@@ -508,9 +527,9 @@ function amountForFood(food,baseG){
   const d=DB[food];return roundFoodAmount(d,baseG/unitScale(d));
 }
 
-function autoMeals(type){
-  const baseType=type==='train'?'high':type==='rest'?'low':type;
-  const t=tgt[type]||tgt[baseType];
+function autoMeals(type,targetOverride=null){
+  const baseType=type==='train'?'high':type==='rest'?'low':type==='pending'?'mid':type;
+  const t=targetOverride||tgt[type]||tgt[baseType];
   const tc=t.carb,tp=t.prot;
   const gramsC=(macro,food,ratio)=>amountForFood(food,macro*ratio/(DB[food].c/100));
   const gramsP=(macro,food,ratio)=>amountForFood(food,macro*ratio/(DB[food].p/100));
@@ -563,7 +582,8 @@ function autoMeals(type){
     [{n:'鸡蛋',g:Math.round(eggG*.35),lk:0},{n:'虾',g:shrimpG,lk:0},{n:'包菜',g:150,lk:0}],
   ]);
 }
-function buildMeals(){return Array.from({length:7},(_,i)=>autoMeals(wT[i]));}
+function targetForDay(i){return dayTargets[i]||tgt[wT[i]]||tgt.mid||tgt.low;}
+function buildMeals(){return Array.from({length:7},(_,i)=>autoMeals(wT[i],targetForDay(i)));}
 
 function mOf(items){
   let r={c:0,f:0,p:0,k:0};
@@ -576,7 +596,7 @@ function toggleSetup(){setupOpen=!setupOpen;document.getElementById('setupPanel'
 
 function defaultProfiles(){
   return[
-    {name:'BENLEE',gender:'female',goal:'cut',deficit:'.15',formula:'cycle',activity:'1.375',age:42,h:164,w:48,startDay:0,startMode:'train',trainingPlan:'3'},
+    {name:'BENLEE',gender:'female',goal:'cut',deficit:'.15',formula:'cycle',activity:'1.375',age:42,h:164,w:48,startDay:0,startMode:'train',trainingPlan:'flex'},
     null,
     null,
   ];
@@ -625,7 +645,7 @@ function fillProfile(p){
   document.getElementById('i-w').value=p.w||'';
   document.getElementById('startDay').value=p.startDay??0;
   document.getElementById('startMode').value=p.startMode||'train';
-  document.getElementById('trainingPlan').value=p.trainingPlan||'3';
+  document.getElementById('trainingPlan').value=p.trainingPlan||'flex';
 }
 
 function renderProfiles(){
@@ -734,6 +754,134 @@ function showEnergyStats(ep,highKcal,lowKcal){
   document.querySelector('#s-lk+.l').textContent='低碳 kcal';
 }
 
+function isFlexPlan(){return document.getElementById('trainingPlan')?.value==='flex';}
+
+function currentWeekKey(){
+  const now=new Date();
+  const monday=new Date(now.getFullYear(),now.getMonth(),now.getDate()-todayIndex());
+  const y=monday.getFullYear(),m=String(monday.getMonth()+1).padStart(2,'0'),d=String(monday.getDate()).padStart(2,'0');
+  return`${y}-${m}-${d}`;
+}
+
+function loadFlexProfileState(){
+  const weekKey=currentWeekKey();
+  let store;
+  try{store=JSON.parse(localStorage.getItem(FLEX_PLAN_KEY)||'null');}catch(e){store=null;}
+  if(!store||store.weekKey!==weekKey||!store.profiles)store={weekKey,profiles:{}};
+  const key=`p${activeProfile}`;
+  const raw=store.profiles[key]||{};
+  const status=Array.from({length:7},(_,i)=>['train','rest'].includes(raw.status?.[i])?raw.status[i]:null);
+  const locked=Array.from({length:7},(_,i)=>!!raw.locked?.[i]);
+  const targets=Array.from({length:7},(_,i)=>raw.targets?.[i]||null);
+  const state={status,locked,targets};
+  store.profiles[key]=state;
+  return{store,state,key};
+}
+
+function saveFlexProfileState(store,state,key=`p${activeProfile}`){
+  store.weekKey=currentWeekKey();store.profiles=store.profiles||{};store.profiles[key]=state;
+  try{localStorage.setItem(FLEX_PLAN_KEY,JSON.stringify(store));}catch(e){}
+}
+
+function flexTargetFromKcal(kcal,base){
+  const fixed=base.prot*4+base.fat*9;
+  const carb=Math.max(0,(kcal-fixed)/4);
+  return{kcal:Math.round(fixed+carb*4),carb:Math.round(carb),fat:Math.round(base.fat),prot:Math.round(base.prot)};
+}
+
+function validFlexTarget(value){
+  return value&&['kcal','carb','fat','prot'].every(k=>Number.isFinite(+value[k])&&+value[k]>=0);
+}
+
+function allocateBoundedFlexKcal(total,indices,weights,minKcal,maxKcal){
+  const result={};let active=indices.slice();let remaining=Math.max(0,total);
+  while(active.length){
+    const weightTotal=active.reduce((s,i)=>s+(weights[i]||1),0)||active.length;
+    const clipped=[];
+    active.forEach(i=>{
+      const raw=remaining*(weights[i]||1)/weightTotal;
+      if(raw<minKcal)clipped.push([i,minKcal]);
+      else if(raw>maxKcal)clipped.push([i,maxKcal]);
+    });
+    if(!clipped.length){
+      active.forEach(i=>{result[i]=Math.max(0,remaining*(weights[i]||1)/weightTotal);});
+      break;
+    }
+    const clippedIds=new Set(clipped.map(([i])=>i));
+    clipped.forEach(([i,value])=>{result[i]=value;remaining-=value;});
+    active=active.filter(i=>!clippedIds.has(i));
+    if(remaining<=0){active.forEach(i=>{result[i]=minKcal;});break;}
+  }
+  return result;
+}
+
+function updateFlexTargets(){
+  const ep=userEnergyProfile();const base=macroDefaults(ep);const today=todayIndex();
+  const loaded=loadFlexProfileState();flexState=loaded.state;
+  const neutral=flexTargetFromKcal(ep.dailyKcal,base);
+
+  for(let i=0;i<today;i++){
+    if(!flexState.locked[i]){
+      flexState.targets[i]=validFlexTarget(flexState.targets[i])?flexState.targets[i]:neutral;
+      flexState.locked[i]=true;
+    }
+  }
+  for(let i=today;i<7;i++)flexState.locked[i]=false;
+
+  const lockedKcal=flexState.locked.reduce((sum,locked,i)=>sum+(locked&&validFlexTarget(flexState.targets[i])?+flexState.targets[i].kcal:0),0);
+  const openDays=Array.from({length:7},(_,i)=>i).filter(i=>!flexState.locked[i]);
+  const weights=flexState.status.map(x=>x==='train'?1.10:x==='rest'?0.90:1);
+  const fixedKcal=base.prot*4+base.fat*9;
+  const minKcal=Math.max(fixedKcal,ep.dailyKcal*.88,ep.bmr*.95);
+  const maxKcal=Math.max(minKcal,ep.dailyKcal*1.12);
+  const allocated=allocateBoundedFlexKcal(ep.dailyKcal*7-lockedKcal,openDays,weights,minKcal,maxKcal);
+
+  dayTargets=Array.from({length:7},(_,i)=>{
+    if(flexState.locked[i]&&validFlexTarget(flexState.targets[i]))return flexState.targets[i];
+    return flexTargetFromKcal(allocated[i]??ep.dailyKcal,base);
+  });
+  flexState.targets=dayTargets.map(x=>({...x}));
+  saveFlexProfileState(loaded.store,flexState,loaded.key);
+
+  wT=flexState.status.map(x=>x==='train'?'train':x==='rest'?'rest':'pending');
+  dMode=flexState.status.map(x=>x==='train'?'训练':x==='rest'?'休息':'待确认');
+  const byKcal=dayTargets.slice().sort((a,b)=>a.kcal-b.kcal);
+  const rest=byKcal[0],train=byKcal[byKcal.length-1];
+  const mid=dayTargets.reduce((best,x)=>Math.abs(x.kcal-ep.dailyKcal)<Math.abs(best.kcal-ep.dailyKcal)?x:best,dayTargets[0]);
+  tgt={train,rest,pending:mid,high:train,mid,low:rest};
+  showEnergyStats(ep,train.kcal,rest.kcal);
+  document.querySelector('#s-hk+.l').textContent='较高日 kcal';
+  document.querySelector('#s-lk+.l').textContent='较低日 kcal';
+  const actualWeek=dayTargets.reduce((s,x)=>s+x.kcal,0);
+  const gap=Math.round(actualWeek-ep.dailyKcal*7);
+  document.getElementById('scienceNote').textContent=`当前目标：${energyGoalText(ep)}；公式日均 ${Math.round(ep.dailyKcal)} kcal，本周约 ${Math.round(ep.dailyKcal*7)} kcal。每天确认训练/休息后，只重算今天和未来；过去日锁定，补偿限制在安全幅度内${gap?`（安全限制后与公式周目标相差 ${gap>0?'+':''}${gap} kcal）`:''}。`;
+  renderFlexCheckin(ep,lockedKcal);
+}
+
+function renderFlexCheckin(ep=null,lockedKcal=0){
+  const box=document.getElementById('flexCheckin');if(!box)return;
+  if(!isFlexPlan()){box.classList.remove('show');return;}
+  box.classList.add('show');
+  ep=ep||userEnergyProfile();
+  const today=todayIndex(),status=flexState?.status?.[today]||null;
+  document.getElementById('flexTrainBtn').classList.toggle('on',status==='train');
+  document.getElementById('flexRestBtn').classList.toggle('on',status==='rest');
+  const confirmed=(flexState?.status||[]).filter(Boolean).length;
+  const remainingDays=Math.max(1,7-(flexState?.locked||[]).filter(Boolean).length);
+  const remaining=Math.max(0,ep.dailyKcal*7-lockedKcal);
+  document.getElementById('flexBudget').textContent=`公式日均 ${Math.round(ep.dailyKcal)} kcal · 本周 ${Math.round(ep.dailyKcal*7)} kcal · 已确认 ${confirmed} 天 · 剩余日均约 ${Math.round(remaining/remainingDays)} kcal`;
+}
+
+function setFlexToday(status){
+  if(!validBodyInputs()){alert('请先完整填写年龄、身高和体重');return;}
+  const loaded=loadFlexProfileState(),today=todayIndex();
+  loaded.state.status[today]=status;loaded.state.locked[today]=false;
+  saveFlexProfileState(loaded.store,loaded.state,loaded.key);
+  applyTrainingPlan(false);
+  for(let i=today;i<7;i++)meals[i]=autoMeals(wT[i],targetForDay(i));
+  selDay=today;renderWeek();renderDetail();
+}
+
 function updateExcelTargets(){
   const ep=userEnergyProfile();
   const base=macroDefaults(ep);
@@ -772,7 +920,8 @@ function updateDingTargets(){
 }
 
 function updateTargets(){
-  if(currentFormulaMode()==='ding')updateDingTargets();
+  if(isFlexPlan())updateFlexTargets();
+  else if(currentFormulaMode()==='ding')updateDingTargets();
   else updateExcelTargets();
 }
 
@@ -781,6 +930,21 @@ function applyTrainingPlan(resetMeals=true){
   const start=+document.getElementById('startDay').value;
   const startMode=document.getElementById('startMode').value;
   const planKey=document.getElementById('trainingPlan').value||'3';
+  const flex=planKey==='flex';
+  document.getElementById('startDayLabel').style.display=flex?'none':'';
+  document.getElementById('startDay').style.display=flex?'none':'';
+  document.getElementById('startModeLabel').style.display=flex?'none':'';
+  document.getElementById('startMode').style.display=flex?'none':'';
+  if(flex){
+    selDay=todayIndex();
+    document.getElementById('planSecTitle').textContent='一周灵活热量安排';
+    document.getElementById('planHint').textContent='每天只确认今天训练或休息；基础热量由个人公式计算，过去日锁定，只重算今天和未来。';
+    updateFlexTargets();
+    if(resetMeals)meals=buildMeals();
+    renderWeek();renderDetail();
+    return;
+  }
+  dayTargets=Array(7).fill(null);flexState=null;renderFlexCheckin();
   const plan=TRAINING_PLANS[planKey]||TRAINING_PLANS['3'];
   const pattern=startMode==='train'?plan.trainFirst:plan.restFirst;
   selDay=start;
@@ -814,26 +978,39 @@ function renderWeek(){
     const tm=TM[type];
     const d=document.createElement('div');
     d.className=`dc ${tm.c}${i===selDay?' sel':''}`;
-    d.innerHTML=(i===today?'<div class="dc-s">今天</div>':i===start?'<div class="dc-s">开始</div>':'')+
-      `<div class="dc-day">${DAYS[i]}</div><div class="dc-lbl ${tm.cls}">${tm.lbl}</div><div class="dc-mode">${dMode[i]}</div><div class="dc-k">${tgt[type].kcal}k</div>`;
+    d.innerHTML=(i===today?'<div class="dc-s">今天</div>':!isFlexPlan()&&i===start?'<div class="dc-s">开始</div>':'')+
+      `<div class="dc-day">${DAYS[i]}</div><div class="dc-lbl ${tm.cls}">${tm.lbl}</div><div class="dc-mode">${dMode[i]}</div><div class="dc-k">${targetForDay(i).kcal}k</div>`;
     d.onclick=()=>selectDay(i);
-    d.oncontextmenu=e=>{e.preventDefault();cycleType(i);};
+    if(!isFlexPlan())d.oncontextmenu=e=>{e.preventDefault();cycleType(i);};
     el.appendChild(d);
   });
 }
 function todayIndex(){return(new Date().getDay()+6)%7;}
 function activeTypeOrder(){return currentFormulaMode()==='ding'?DING_TORD:TORD;}
-function cycleType(i){const ord=activeTypeOrder();wT[i]=ord[(ord.indexOf(wT[i])+1+ord.length)%ord.length];updateTargets();meals=buildMeals();renderWeek();if(i===selDay)renderDetail();}
+function cycleType(i){if(isFlexPlan())return;const ord=activeTypeOrder();wT[i]=ord[(ord.indexOf(wT[i])+1+ord.length)%ord.length];updateTargets();meals=buildMeals();renderWeek();if(i===selDay)renderDetail();}
 function selectDay(i){selDay=i;renderWeek();document.getElementById('det').style.display='';renderDetail();document.getElementById('det').scrollIntoView({behavior:'smooth',block:'nearest'});}
 
 function planPattern(){
   const planKey=document.getElementById('trainingPlan').value||'3';
+  if(planKey==='flex')return{planKey,pattern:{train:[]}};
   const startMode=document.getElementById('startMode').value;
   const plan=TRAINING_PLANS[planKey]||TRAINING_PLANS['3'];
   return{planKey,pattern:startMode==='train'?plan.trainFirst:plan.restFirst};
 }
 
 function workoutAdvice(di){
+  if(isFlexPlan()){
+    const status=flexState?.status?.[di]||null;
+    if(!status)return{icon:'❔',part:'等待确认',detail:'选择“今天训练”或“今天休息”后，系统会确定今天的饮食与恢复安排',chips:['今日确认','自动配热量','不预排整周']};
+    if(status==='rest')return{icon:'🌿',part:'恢复日',detail:'轻松步行 30–45 分钟，配合拉伸或筋膜放松',chips:['低强度步行','全身拉伸','保证睡眠']};
+    const order=Math.max(0,flexState.status.slice(0,di+1).filter(x=>x==='train').length-1);
+    const splits=[
+      {icon:'🦵',part:'腿臀',detail:'深蹲、硬拉或弓步为主，训练 45–70 分钟',chips:['深蹲','髋主导','腿部辅助']},
+      {icon:'🏋️',part:'胸肩三头',detail:'卧推或俯卧撑、肩推，加三头训练',chips:['水平推','肩推','三头']},
+      {icon:'🧗',part:'背部二头',detail:'下拉或引体、划船，加二头训练',chips:['垂直拉','水平拉','二头']},
+    ];
+    return splits[order%splits.length];
+  }
   const start=+document.getElementById('startDay').value;
   const rel=(di-start+7)%7;
   const {planKey,pattern}=planPattern();
@@ -857,7 +1034,7 @@ function workoutAdvice(di){
 }
 
 function dietAdvice(type){
-  const baseType=type==='train'?'high':type==='rest'?'low':type;
+  const baseType=type==='train'?'high':type==='rest'?'low':type==='pending'?'mid':type;
   if(baseType==='high')return{title:'主食靠近训练',detail:'三餐都可安排主食，训练前后优先米饭、番薯或水果；蛋白选低脂来源，少加油。',chips:['主食充足','低脂蛋白','训练前后补碳']};
   if(baseType==='mid')return{title:'均衡搭配',detail:'每餐保留一拳主食、一掌蛋白和两拳蔬菜，脂肪适量，保持稳定饱腹。',chips:['主食适量','蛋白均分','蔬菜加量']};
   return{title:'蛋白蔬菜优先',detail:'每餐先保证蛋白质和蔬菜，主食集中在白天或减半，用坚果、鱼或少量食用油补脂肪。',chips:['蛋白优先','主食减量','健康脂肪']};
@@ -873,7 +1050,7 @@ function renderCoachCard(di,t){
   const ring=`conic-gradient(var(--hi) 0 ${carbEnd}%,var(--mi) ${carbEnd}% ${protEnd}%,#f0a030 ${protEnd}% 100%)`;
   document.getElementById('todayStrip').textContent=`${workout.icon} ${workout.part} · 🍽 ${diet.title}`;
   document.getElementById('coachCard').innerHTML=`
-    <div class="coach-top"><div class="coach-title">今日执行卡</div><div class="coach-tag">${dMode[di]} · ${TM[wT[di]].lbl}日</div></div>
+    <div class="coach-top"><div class="coach-title">今日执行卡</div><div class="coach-tag">${dMode[di]} · ${TM[wT[di]].lbl}${wT[di]==='pending'?'预估':'日'}</div></div>
     <div class="coach-body">
       <div><div class="fuel-ring" style="background:${ring}"><div class="fuel-center"><strong>${t.kcal}</strong><span>目标 kcal</span></div></div><div class="macro-legend"><span><i class="legend-dot" style="background:var(--hi)"></i>碳${carbPct}%</span><span><i class="legend-dot" style="background:var(--mi)"></i>蛋${protPct}%</span><span><i class="legend-dot" style="background:#f0a030"></i>脂${fatPct}%</span></div></div>
       <div class="coach-main">
@@ -885,7 +1062,7 @@ function renderCoachCard(di,t){
 }
 
 function renderDetail(){
-  const di=selDay;const t=tgt[wT[di]];const dm=dayM(di);
+  const di=selDay;const t=targetForDay(di);const dm=dayM(di);
   document.getElementById('d-ttl').innerHTML=`<span>${DAYS[di]} · ${TM[wT[di]].lbl}日</span><span class="meal-actions"><button class="btn-auto" onclick="autoDistributeDay(${di})">⚖ 分配</button><button class="btn-auto" onclick="saveMealTemplate(${di})">💾 保存</button><button class="btn-auto" onclick="applyMealTemplate(${di})">📋 套用</button></span>`;
   const isDing=currentFormulaMode()==='ding';
   function badge(label,actual,target,unit,refOnly=false){
@@ -1142,7 +1319,7 @@ function foodPickRank(name,type){
     if(name==='坚果'||name==='食用油'||name==='安佳黄油'||name==='安佳芝士'||name==='妙可蓝多奶酪'||name==='干奶酪'||name==='鸡翅'||name==='三文鱼')return{cls:'avoid',label:'高脂'};
     if(isBreakfastCarb(name))return{cls:'caution',label:'少量'};
   }
-  if(type==='mid'||type==='train'){
+  if(type==='mid'||type==='train'||type==='pending'){
     if(data?.custom&&data.cat==='prot')return{cls:'good',label:'蛋白'};
     if(data?.custom&&data.cat==='carb')return{cls:'good',label:'主食'};
     if(isLowFatProtein(name))return{cls:'good',label:'蛋白'};
@@ -1341,7 +1518,7 @@ function topMacroSources(day,key,limit=4){
 
 function checkFeasibilityBeforeDistribute(di,day){
   if(currentFormulaMode()==='ding')return true;
-  const t=tgt[wT[di]];
+  const t=targetForDay(di);
   const m=mealPlanTotals(day);
   const checks=[
     {key:'c',label:'碳水',actual:m.c,target:t.carb,unit:'g',tol:5},
@@ -1774,7 +1951,7 @@ function autoDistributeDay(di){
   const baseRatios=[.25,.40,.10,.25];
   const ratioTotal=usedMeals.reduce((s,mi)=>s+baseRatios[mi],0)||1;
   const mealRatio=baseRatios.map((r,mi)=>usedMeals.includes(mi)?r/ratioTotal:0);
-  const dayTarget=tgt[wT[di]];
+  const dayTarget=targetForDay(di);
   const original=unlocked.map(u=>({g:u.it.g,manual:u.it.manual}));
   const beforeScore=distributionGapScore(di,dayTarget);
 
@@ -1913,7 +2090,7 @@ function suggestAdjust(di,it){
   if(it.lk)return{text:'已锁',dir:'',title:'这项已锁定，不参与调整建议'};
   const d=DB[it.n];if(!d)return{text:'',dir:'',title:''};
   if(d.cat==='veg')return{text:'蔬菜',dir:'',title:'蔬菜主要用于纤维和饱腹感，不优先用于补三大营养缺口'};
-  const t=tgt[wT[di]],dm=dayM(di);
+  const t=targetForDay(di),dm=dayM(di);
   if(currentFormulaMode()==='ding'){
     const gap=t.kcal-dm.k,per=macroPerAmount(d,'k');
     if(Math.abs(gap)<30||per<=0)return{text:'接近',dir:'',title:'当天热量已接近'};
@@ -1993,7 +2170,7 @@ function onGramChange(di,mi,fi,newG){
   }));
 
   if(adjustables.length){
-    tuneDistribution(di,adjustables,tgt[wT[di]]);
+    tuneDistribution(di,adjustables,targetForDay(di));
     adjustables.forEach(u=>keepFoodPositive(u.it,u.mi));
   }
   renderDetail();
@@ -2485,7 +2662,7 @@ document.getElementById('ov').onclick=e=>{if(e.target===document.getElementById(
 const profiles=loadProfiles();
 fillProfile(profiles[0]||defaultProfiles()[0]);
 renderProfiles();
-applyTrainingPlan();selectDay(+document.getElementById('startDay').value||0);
+applyTrainingPlan();selectDay(isFlexPlan()?todayIndex():(+document.getElementById('startDay').value||0));
 
 function syncStickyOffset(){
   const header=document.querySelector('.hd');
