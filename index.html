@@ -2242,7 +2242,8 @@ function openFoodHub(context=null,editName=''){
 function foodFormHtml(food=null,originalName=''){
   const x=food||{name:'',c:'',f:'',p:'',k:'',cat:'carb',u:'g',raw:'自定义/每100g',source:'手动录入'};
   const review=[...(x.assumptions||[]),...(x.warnings||[])].filter(Boolean).slice(0,4).join('；');
-  return `<div class="source-note">数据来源：${escapeHtml(x.source||'手动录入')}。保存前请核对包装标签和“每100克/每100毫升”基准。${review?`<br><strong>需要核对：</strong>${escapeHtml(review)}`:''}</div><div class="food-form-grid">
+  const confidence=x.confidence!==null&&x.confidence!==undefined&&x.confidence!==''&&Number.isFinite(+x.confidence)?` · 识别把握约 ${Math.round(+x.confidence*100)}%`:'';
+  return `<div class="source-note">数据来源：${escapeHtml(x.source||'手动录入')}${confidence}。保存前请核对“每100克/每100毫升”基准。${review?`<br><strong>需要核对：</strong>${escapeHtml(review)}`:''}</div><div class="food-form-grid">
     <div class="mf wide-field"><label>食物名称</label><input id="cf-name" maxlength="80" value="${escapeHtml(x.name||'')}" placeholder="例如：低脂牛肉丸"/></div>
     <div class="mf"><label>计算单位</label><select id="cf-unit"><option value="g" ${x.u!=='ml'?'selected':''}>每100克</option><option value="ml" ${x.u==='ml'?'selected':''}>每100毫升</option></select></div>
     <div class="mf"><label>食物分类</label><select id="cf-cat"><option value="carb">主食/碳水</option><option value="prot">蛋白质</option><option value="fat">脂肪类</option><option value="veg">蔬菜</option><option value="oil">食用油</option></select></div>
@@ -2260,12 +2261,13 @@ function foodFormHtml(food=null,originalName=''){
 function renderSmartFoodHome(message=''){
   const panel=document.getElementById('foodHubPanel');if(!panel)return;
   window._editingFoodName='';window._foodDraftSource='';window._foodDraftSourceId='';window._onlineFoodResults=[];
-  panel.innerHTML=`<div class="food-search-row"><input id="smartFoodQuery" placeholder="食物名称或包装条码" onkeydown="if(event.key==='Enter')smartFoodTextSubmit()"/><button class="bpri" type="button" onclick="smartFoodTextSubmit()">识别</button></div>
+  panel.innerHTML=`<div class="smart-food-intro"><strong>输入名称就能添加</strong>例如“冬瓜、玉米、炒青菜”；系统会给出每100克常见平均值，确认后保存。</div>
+    <div class="food-search-row"><input id="smartFoodQuery" placeholder="输入食物名称，或包装条码" onkeydown="if(event.key==='Enter')smartFoodTextSubmit()"/><button class="bpri" type="button" onclick="smartFoodTextSubmit()">查找</button></div>
     <div class="smart-food-or">或者拍一张照片</div>
     <label class="upload-box">📷 拍照或选择图片<input id="smartFoodPhoto" type="file" accept="image/*" capture="environment" onchange="smartFoodPhoto(this.files[0])"/></label>
-    <div class="smart-photo-help">食物照片、包装条码、营养成分表都从这里进入</div>
+    <div class="smart-photo-help">系统会按画面主体判断：食物、营养成分表或条形码</div>
     <img class="ocr-preview" id="smartPreview" alt="待识别照片预览"/>
-    <div class="food-status" id="smartFoodStatus">${escapeHtml(message||'AI会自动判断食物、条码或营养表；结果需要你确认后才会保存。照片仅用于本次识别，不会存进食物库。')}</div>
+    <div class="food-status" id="smartFoodStatus">${escapeHtml(message||'普通食物名称使用常见平均值；包装食品优先使用营养表。结果需要确认后才保存，照片不会进入食物库。')}</div>
     <div class="food-results" id="smartFoodResults"></div>
     <button class="smart-manual-link" type="button" onclick="renderFoodEditor()">无法识别？手动填写营养数据</button>`;
   renderCustomFoodLibrary();
@@ -2333,14 +2335,18 @@ async function callFoodAi(payload){
 
 function foodFromAiResponse(data){
   const x=data.food||{};
-  const c=Number(x.c),f=Number(x.f),p=Number(x.p),k=Number(x.k);
-  if(!x.name||[c,f,p,k].some(v=>!Number.isFinite(v)||v<0))throw new Error('AI 返回的营养数据不完整，请重试。');
+  const optionalNumber=value=>value===null||value===undefined||value===''?'':Number(value);
+  const c=optionalNumber(x.c),f=optionalNumber(x.f),p=optionalNumber(x.p),k=optionalNumber(x.k);
+  const values=[c,f,p,k],provided=values.filter(v=>v!=='');
+  if(!x.name&&x.inputType!=='nutrition_label')throw new Error('AI 没有确认食物名称，请输入名称后再试。');
+  if(!provided.length||provided.some(v=>!Number.isFinite(v)||v<0))throw new Error('AI 返回的营养数据不完整，请重试。');
   return{
-    name:String(x.name).slice(0,80),brand:String(x.brand||'').slice(0,80),
-    c:+c.toFixed(1),f:+f.toFixed(1),p:+p.toFixed(1),k:+k.toFixed(1),
-    cat:inferFoodCategory(c,f,p),u:x.u==='ml'?'ml':'g',
+    name:String(x.name||'').slice(0,80),brand:String(x.brand||'').slice(0,80),
+    c:c===''?'':+c.toFixed(1),f:f===''?'':+f.toFixed(1),p:p===''?'':+p.toFixed(1),k:k===''?'':+k.toFixed(1),
+    cat:inferFoodCategory(+c||0,+f||0,+p||0),u:x.u==='ml'?'ml':'g',
     raw:String(x.raw||`AI识别/每100${x.u==='ml'?'ml':'g'}`).slice(0,120),
     source:String(x.source||'腾讯云AI识别').slice(0,80),sourceId:String(data.requestId||x.barcode||'').slice(0,100),
+    confidence:x.confidence!==null&&x.confidence!==undefined&&x.confidence!==''&&Number.isFinite(+x.confidence)?+x.confidence:null,
     assumptions:Array.isArray(x.assumptions)?x.assumptions:[],warnings:Array.isArray(x.warnings)?x.warnings:[],
   };
 }
@@ -2497,15 +2503,15 @@ function nutritionTextScore(text){
 
 function renderFoodPhotoAssist(){
   const {status,box}=smartFoodElements();if(!status||!box)return;
-  status.textContent='已判断为普通食物照片。请确认食物名称，系统再联网估算营养；照片无法准确判断重量和烹调用油。';
+  status.textContent='照片没有读出可靠数据。请输入食物名称，系统会按常见平均值估算；照片无法准确判断重量和烹调用油。';
   box.innerHTML=`<div class="food-search-row"><input id="photoFoodName" placeholder="例如：番茄炒蛋" onkeydown="if(event.key==='Enter')searchFoodPhotoName()"/><button class="bpri" type="button" onclick="searchFoodPhotoName()">继续</button></div>`;
   document.getElementById('photoFoodName')?.focus();
 }
 
-function searchFoodPhotoName(){
+async function searchFoodPhotoName(){
   const value=String(document.getElementById('photoFoodName')?.value||'').trim();
   const main=document.getElementById('smartFoodQuery');if(main)main.value=value;
-  searchOnlineFoods(value);
+  await smartFoodTextSubmit();
 }
 
 async function smartFoodPhoto(file){
@@ -2514,20 +2520,19 @@ async function smartFoodPhoto(file){
   if(!status||!box)return;
   const previewUrl=URL.createObjectURL(file);preview.src=previewUrl;preview.style.display='block';box.innerHTML='';
   status.textContent='正在判断照片类型…';
-  const barcode=await detectBarcodeInPhoto(file);
-  if(barcode&&await lookupBarcode(barcode)){URL.revokeObjectURL(previewUrl);return;}
-  status.textContent='正在通过腾讯云 AI 识别食物、条码或营养表…';
+  const barcodeHint=await detectBarcodeInPhoto(file);
+  status.textContent='正在识别画面主体和营养数据…';
   try{
     const imageDataUrl=await fileToAiDataUrl(file);
-    useFoodAiResponse(await callFoodAi({imageDataUrl,fileName:String(file.name||'photo').slice(0,120)}));
+    useFoodAiResponse(await callFoodAi({imageDataUrl,barcodeHint,fileName:String(file.name||'photo').slice(0,120)}));
     URL.revokeObjectURL(previewUrl);return;
   }catch(e){
     status.textContent=`${e.message} 正在改用本地识别…`;
   }
-  await smartFoodPhotoFallback(file,previewUrl);
+  await smartFoodPhotoFallback(file,previewUrl,barcodeHint);
 }
 
-async function smartFoodPhotoFallback(file,previewUrl){
+async function smartFoodPhotoFallback(file,previewUrl,barcodeHint=''){
   const {status}=smartFoodElements();
   status.textContent='未发现条码，正在检查是否为营养成分表…首次使用可能需要几十秒。';
   let worker=null;
@@ -2536,13 +2541,12 @@ async function smartFoodPhotoFallback(file,previewUrl){
     worker=await T.createWorker(['chi_sim','eng'],1,{logger:m=>{if(m.status==='recognizing text')status.textContent=`正在分析照片… ${Math.round((m.progress||0)*100)}%`;}});
     const ret=await worker.recognize(file,{rotateAuto:true});
     const rawText=normalizeOcrText(ret.data.text);
-    const ocrBarcode=(rawText.match(/(?:^|\D)(\d{8,14})(?:\D|$)/)||[])[1]||'';
-    if(ocrBarcode){await lookupBarcode(ocrBarcode);return;}
     const draft=parseNutritionLabel(rawText);
     if(nutritionTextScore(rawText)>=2&&(draft.c||draft.f||draft.p||draft.k)){
       status.textContent='已判断为营养成分表，并提取了数据。请逐项核对包装后再保存。';
       renderFoodEditor(draft,'');return;
     }
+    if(barcodeHint&&await lookupBarcode(barcodeHint))return;
     renderFoodPhotoAssist();
   }catch(e){
     renderFoodPhotoAssist();
@@ -2568,7 +2572,8 @@ function showFoodFormError(message){
 function saveCustomFood(){
   const originalName=window._editingFoodName||'';
   const name=String(document.getElementById('cf-name')?.value||'').trim().replace(/[<>]/g,'').slice(0,80);
-  const c=+document.getElementById('cf-c')?.value,f=+document.getElementById('cf-f')?.value,p=+document.getElementById('cf-p')?.value,k=+document.getElementById('cf-k')?.value;
+  const formNumber=id=>{const value=String(document.getElementById(id)?.value??'').trim();return value===''?NaN:Number(value);};
+  const c=formNumber('cf-c'),f=formNumber('cf-f'),p=formNumber('cf-p'),k=formNumber('cf-k');
   const u=document.getElementById('cf-unit')?.value==='ml'?'ml':'g';
   const cat=document.getElementById('cf-cat')?.value||inferFoodCategory(c,f,p);
   let raw=String(document.getElementById('cf-raw')?.value||'').trim().slice(0,120);
