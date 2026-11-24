@@ -244,6 +244,11 @@ body{background:var(--bg);min-height:100vh;-webkit-font-smoothing:antialiased;}
 .food-library-title{font-size:12px;font-weight:700;color:var(--tx2);}
 .food-library-tools{display:flex;gap:5px;}
 .mini-btn{border:1px solid var(--bd);background:var(--sur);color:var(--tx2);border-radius:8px;padding:5px 7px;font-size:10px;cursor:pointer;}
+.mini-btn.danger{border-color:#f0b6ad;background:#fff7f5;color:#cf3d2e;font-weight:700;}
+.mini-btn.sync{border-color:var(--hi-bd);background:var(--hi-bg);color:var(--acc);font-weight:700;}
+.food-sync-status{font-size:10px;color:var(--tx3);margin:-1px 0 8px;line-height:1.4;}
+.food-sync-status.ok{color:var(--acc);}
+.food-sync-status.err{color:#cf3d2e;}
 .custom-food-list{display:flex;flex-direction:column;gap:6px;}
 .custom-food-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;background:var(--sur2);border-radius:10px;padding:8px 9px;}
 .custom-food-main{min-width:0;}
@@ -447,8 +452,12 @@ const DB={
 };
 const BUILTIN_FOOD_NAMES=Object.keys(DB);
 const CUSTOM_FOOD_KEY='benlee_carb_custom_foods_v1';
+const CUSTOM_FOOD_DELETED_KEY='benlee_carb_custom_food_deleted_v1';
 const FOOD_AI_ENDPOINT='https://1.12.47.127/carb-api/v1/recognize';
 const FOOD_AI_ACCESS_KEY='benlee_carb_food_ai_access_v1';
+const FOOD_SYNC_ENDPOINT='https://1.12.47.127/carb-api/v1/foods';
+const FOOD_SYNC_ACCESS_KEY='benlee_carb_food_sync_access_v1';
+let foodSyncBusy=false,foodSyncMessage='',foodSyncTone='';
 function loadCustomFoods(){
   try{
     const rows=JSON.parse(localStorage.getItem(CUSTOM_FOOD_KEY)||'[]');
@@ -456,17 +465,86 @@ function loadCustomFoods(){
     return rows.filter(x=>x&&typeof x.name==='string'&&x.name&&Number.isFinite(+x.k)).map(x=>({
       name:x.name.slice(0,80),c:Math.max(0,+x.c||0),f:Math.max(0,+x.f||0),p:Math.max(0,+x.p||0),k:Math.max(0,+x.k||0),
       cat:['carb','prot','fat','veg','oil'].includes(x.cat)?x.cat:'carb',u:x.u==='ml'?'ml':'g',raw:x.raw||'自定义/每100'+(x.u==='ml'?'ml':'g'),
-      custom:1,source:x.source||'手动录入',sourceId:x.sourceId||'',savedAt:x.savedAt||new Date().toISOString()
+      custom:1,source:x.source||'手动录入',sourceId:x.sourceId||'',savedAt:x.savedAt||new Date().toISOString(),updatedAt:x.updatedAt||x.savedAt||new Date().toISOString()
     }));
   }catch(e){return[];}
 }
+function loadFoodDeletions(){
+  try{
+    const rows=JSON.parse(localStorage.getItem(CUSTOM_FOOD_DELETED_KEY)||'[]');
+    return Array.isArray(rows)?rows.filter(x=>x&&typeof x.name==='string'&&x.name).map(x=>({name:x.name.slice(0,80),deletedAt:x.deletedAt||new Date().toISOString()})):[];
+  }catch(e){return[];}
+}
 let customFoods=loadCustomFoods().filter(x=>!BUILTIN_FOOD_NAMES.includes(x.name));
+let customFoodDeletions=loadFoodDeletions();
 customFoods.forEach(x=>{if(!DB[x.name])DB[x.name]={...x};});
 let FN=Object.keys(DB);
 function refreshFoodNames(){FN=Object.keys(DB);}
-function saveCustomFoods(){
-  try{localStorage.setItem(CUSTOM_FOOD_KEY,JSON.stringify(customFoods));return true;}
+function saveCustomFoods(sync=true){
+  try{
+    localStorage.setItem(CUSTOM_FOOD_KEY,JSON.stringify(customFoods));
+    localStorage.setItem(CUSTOM_FOOD_DELETED_KEY,JSON.stringify(customFoodDeletions));
+    if(sync)queueFoodSync();
+    return true;
+  }
   catch(e){alert('食物库保存失败，请先导出备份或清理浏览器空间。');return false;}
+}
+function getFoodSyncToken(interactive=false){
+  let token='';
+  try{token=localStorage.getItem(FOOD_SYNC_ACCESS_KEY)||'';}catch(e){}
+  if(token||!interactive)return token;
+  token=String(prompt('首次使用请输入食物云同步码（只需输入一次）')||'').trim();
+  if(token)try{localStorage.setItem(FOOD_SYNC_ACCESS_KEY,token);}catch(e){}
+  return token;
+}
+function foodTime(value){const time=Date.parse(String(value||''));return Number.isFinite(time)?time:0;}
+function setFoodSyncStatus(message,tone=''){
+  foodSyncMessage=message;foodSyncTone=tone;
+  const el=document.getElementById('foodSyncStatus');
+  if(el){el.textContent=message;el.className=`food-sync-status ${tone}`;}
+}
+function applyMergedFoodLibrary(remote={}){
+  const localFoods=customFoods.filter(x=>!BUILTIN_FOOD_NAMES.includes(x.name));
+  const remoteFoods=(Array.isArray(remote.foods)?remote.foods:[]).filter(x=>x&&x.name&&!BUILTIN_FOOD_NAMES.includes(x.name));
+  const localDeleted=customFoodDeletions;
+  const remoteDeleted=Array.isArray(remote.deleted)?remote.deleted:[];
+  const names=new Set([...localFoods,...remoteFoods,...localDeleted,...remoteDeleted].map(x=>x?.name).filter(Boolean));
+  const foods=[],deleted=[];
+  names.forEach(name=>{
+    const food=[...localFoods,...remoteFoods].filter(x=>x.name===name).sort((a,b)=>foodTime(b.updatedAt||b.savedAt)-foodTime(a.updatedAt||a.savedAt))[0];
+    const tomb=[...localDeleted,...remoteDeleted].filter(x=>x.name===name).sort((a,b)=>foodTime(b.deletedAt)-foodTime(a.deletedAt))[0];
+    if(tomb&&foodTime(tomb.deletedAt)>=foodTime(food?.updatedAt||food?.savedAt))deleted.push({name,deletedAt:tomb.deletedAt});
+    else if(food)foods.push({...food,custom:1,updatedAt:food.updatedAt||food.savedAt||new Date().toISOString()});
+  });
+  Object.keys(DB).forEach(name=>{if(DB[name]?.custom)delete DB[name];});
+  customFoods=foods;customFoodDeletions=deleted;
+  customFoods.forEach(x=>{DB[x.name]={...x};});
+  refreshFoodNames();saveCustomFoods(false);renderCustomFoodLibrary();
+  return{version:1,foods:customFoods,deleted:customFoodDeletions};
+}
+async function syncCustomFoods(interactive=false){
+  if(foodSyncBusy)return;
+  const token=getFoodSyncToken(interactive);
+  if(!token){if(interactive)setFoodSyncStatus('没有输入同步码，本机食物仍已保存。','err');return;}
+  foodSyncBusy=true;setFoodSyncStatus('正在同步到服务器…');
+  try{
+    const headers={Authorization:`Bearer ${token}`,'Content-Type':'application/json'};
+    const response=await fetch(FOOD_SYNC_ENDPOINT,{headers});
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok)throw Object.assign(new Error(data.error||`同步失败（${response.status}）`),{status:response.status});
+    const merged=applyMergedFoodLibrary(data.library||{});
+    const saved=await fetch(FOOD_SYNC_ENDPOINT,{method:'PUT',headers,body:JSON.stringify(merged)});
+    const savedData=await saved.json().catch(()=>({}));
+    if(!saved.ok)throw Object.assign(new Error(savedData.error||`同步失败（${saved.status}）`),{status:saved.status});
+    setFoodSyncStatus(`已同步到服务器 · ${new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})}`,'ok');
+  }catch(error){
+    if(error.status===401)try{localStorage.removeItem(FOOD_SYNC_ACCESS_KEY);}catch(e){}
+    setFoodSyncStatus(error.status===401?'同步码不正确，请重新点击“云同步”。':'服务器暂时未同步，本机数据已保留，稍后可重试。','err');
+  }finally{foodSyncBusy=false;}
+}
+function queueFoodSync(){
+  if(!getFoodSyncToken(false))return;
+  clearTimeout(window._foodSyncTimer);window._foodSyncTimer=setTimeout(()=>syncCustomFoods(false),300);
 }
 const DOTCOL={carb:'#1a9e6e',fat:'#f0a030',prot:'#2f7ed4',veg:'#7ab648',oil:'#d46030'};
 const PRI={veg:0,carb:1,prot:2,fat:3,oil:4};
@@ -2582,8 +2660,13 @@ function saveCustomFood(){
   if([c,f,p,k].some(v=>!Number.isFinite(v)||v<0)){showFoodFormError('请完整填写碳水、脂肪、蛋白质和热量，数值不能小于0。');return;}
   if(c>100||f>100||p>100){showFoodFormError(`每100${u}的单项营养不能超过100克。`);return;}
   if(DB[name]&&name!==originalName){showFoodFormError('这个名称已经存在，请换一个名称，或在下方直接编辑原食物。');return;}
-  const record={name,c,f,p,k,cat,u,raw,custom:1,source:window._foodDraftSource||'手动录入',sourceId:window._foodDraftSourceId||'',savedAt:new Date().toISOString()};
-  if(originalName&&originalName!==name&&DB[originalName]?.custom)delete DB[originalName];
+  const now=new Date().toISOString();
+  const record={name,c,f,p,k,cat,u,raw,custom:1,source:window._foodDraftSource||'手动录入',sourceId:window._foodDraftSourceId||'',savedAt:now,updatedAt:now};
+  if(originalName&&originalName!==name&&DB[originalName]?.custom){
+    delete DB[originalName];
+    customFoodDeletions=customFoodDeletions.filter(x=>x.name!==originalName).concat({name:originalName,deletedAt:now});
+  }
+  customFoodDeletions=customFoodDeletions.filter(x=>x.name!==name);
   const oldIndex=customFoods.findIndex(x=>x.name===originalName||x.name===name);
   if(oldIndex>=0)customFoods[oldIndex]=record;else customFoods.push(record);
   DB[name]={...record};refreshFoodNames();
@@ -2613,8 +2696,9 @@ function finishFoodSave(name,oldName=''){
 function renderCustomFoodLibrary(){
   const box=document.getElementById('customFoodLibrary');if(!box)return;
   const list=customFoods.slice().sort((a,b)=>a.name.localeCompare(b.name,'zh-CN'));
-  box.innerHTML=`<div class="food-library-head"><div class="food-library-title">我的食物（${list.length}）</div><div class="food-library-tools"><button class="mini-btn" type="button" onclick="exportCustomFoods()">导出</button><label class="mini-btn">导入<input type="file" accept="application/json,.json" style="display:none" onchange="importCustomFoods(this.files[0])"/></label></div></div>`+
-    (list.length?`<div class="custom-food-list">${list.map((x,i)=>`<div class="custom-food-row"><div class="custom-food-main"><div class="custom-food-name">${escapeHtml(x.name)}</div><div class="custom-food-meta">每100${x.u} · ${Math.round(x.k)}kcal · 碳${x.c} 脂${x.f} 蛋${x.p}</div></div><div class="custom-food-btns"><button class="mini-btn" type="button" onclick="editCustomFoodAt(${i})">编辑</button><button class="mini-btn" type="button" onclick="deleteCustomFoodAt(${i})">删除</button></div></div>`).join('')}</div>`:'<div class="custom-food-empty">还没有自己的食物，保存后会出现在这里。</div>');
+  const syncText=foodSyncMessage||(getFoodSyncToken(false)?'已开启云端保存；修改和删除会自动同步。':'点击“云同步”，换浏览器或设备也能看到同一份食物库。');
+  box.innerHTML=`<div class="food-library-head"><div class="food-library-title">我的食物（${list.length}）</div><div class="food-library-tools"><button class="mini-btn sync" type="button" onclick="syncCustomFoods(true)">☁️ 云同步</button><button class="mini-btn" type="button" onclick="exportCustomFoods()">导出</button><label class="mini-btn">导入<input type="file" accept="application/json,.json" style="display:none" onchange="importCustomFoods(this.files[0])"/></label></div></div><div id="foodSyncStatus" class="food-sync-status ${foodSyncTone}">${escapeHtml(syncText)}</div>`+
+    (list.length?`<div class="custom-food-list">${list.map((x,i)=>`<div class="custom-food-row"><div class="custom-food-main"><div class="custom-food-name">${escapeHtml(x.name)}</div><div class="custom-food-meta">每100${x.u} · ${Math.round(x.k)}kcal · 碳${x.c} 脂${x.f} 蛋${x.p}</div></div><div class="custom-food-btns"><button class="mini-btn" type="button" onclick="editCustomFoodAt(${i})">编辑</button><button class="mini-btn danger" type="button" aria-label="删除${escapeHtml(x.name)}" onclick="deleteCustomFoodAt(${i})">🗑 删除</button></div></div>`).join('')}</div>`:'<div class="custom-food-empty">还没有自己的食物，保存后会出现在这里。</div>');
   window._sortedCustomFoods=list;
 }
 
@@ -2628,7 +2712,9 @@ function deleteCustomFoodAt(i){
   const inUse=meals.some(day=>day.some(meal=>meal.some(it=>it.n===x.name)))||templatesUseFood(x.name);
   if(inUse){alert('这个食物正在当前餐单或已保存模板中使用，请先移除后再删除。');return;}
   if(!confirm(`确定删除“${x.name}”吗？`))return;
+  const deletedAt=new Date().toISOString();
   customFoods=customFoods.filter(y=>y.name!==x.name);delete DB[x.name];refreshFoodNames();
+  customFoodDeletions=customFoodDeletions.filter(y=>y.name!==x.name).concat({name:x.name,deletedAt});
   pantryFoods=pantryFoods.map(list=>list.filter(n=>n!==x.name));saveCustomFoods();renderCustomFoodLibrary();
 }
 
@@ -2648,8 +2734,10 @@ async function importCustomFoods(file){
       const name=String(raw?.name||'').trim().replace(/[<>]/g,'').slice(0,80);
       const nums=[+raw?.c,+raw?.f,+raw?.p,+raw?.k];
       if(!name||nums.some(v=>!Number.isFinite(v)||v<0)||nums.slice(0,3).some(v=>v>100)||BUILTIN_FOOD_NAMES.includes(name)){skipped++;return;}
-      const record={name,c:nums[0],f:nums[1],p:nums[2],k:nums[3],cat:['carb','prot','fat','veg','oil'].includes(raw.cat)?raw.cat:inferFoodCategory(...nums.slice(0,3)),u:raw.u==='ml'?'ml':'g',raw:String(raw.raw||'导入/每100g').slice(0,120),custom:1,source:String(raw.source||'导入').slice(0,80),sourceId:String(raw.sourceId||'').slice(0,100),savedAt:raw.savedAt||new Date().toISOString()};
+      const now=new Date().toISOString();
+      const record={name,c:nums[0],f:nums[1],p:nums[2],k:nums[3],cat:['carb','prot','fat','veg','oil'].includes(raw.cat)?raw.cat:inferFoodCategory(...nums.slice(0,3)),u:raw.u==='ml'?'ml':'g',raw:String(raw.raw||'导入/每100g').slice(0,120),custom:1,source:String(raw.source||'导入').slice(0,80),sourceId:String(raw.sourceId||'').slice(0,100),savedAt:raw.savedAt||now,updatedAt:now};
       const idx=customFoods.findIndex(x=>x.name===name);if(idx>=0){customFoods[idx]=record;updated++;}else{customFoods.push(record);added++;}
+      customFoodDeletions=customFoodDeletions.filter(x=>x.name!==name);
       DB[name]={...record};
     });
     refreshFoodNames();saveCustomFoods();renderCustomFoodLibrary();alert(`导入完成：新增 ${added}，更新 ${updated}，跳过 ${skipped}。`);
@@ -2668,6 +2756,7 @@ const profiles=loadProfiles();
 fillProfile(profiles[0]||defaultProfiles()[0]);
 renderProfiles();
 applyTrainingPlan();selectDay(isFlexPlan()?todayIndex():(+document.getElementById('startDay').value||0));
+setTimeout(()=>syncCustomFoods(false),500);
 
 function syncStickyOffset(){
   const header=document.querySelector('.hd');
