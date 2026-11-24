@@ -115,6 +115,36 @@ body{background:var(--bg);min-height:100vh;-webkit-font-smoothing:antialiased;}
 .macro-legend{display:flex;justify-content:center;gap:7px;margin-top:9px;font-size:9px;color:var(--tx3);}
 .legend-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:3px;vertical-align:1px;}
 
+.daily-log-card{margin:12px 14px 0;padding:13px;border:1px solid var(--bd);border-radius:16px;background:linear-gradient(135deg,#fffaf2 0%,#fff 52%,#f6fffb 100%);box-shadow:0 5px 16px rgba(88,66,20,.06);}
+.daily-log-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;}
+.daily-log-title{font-size:14px;font-weight:800;}
+.daily-log-date{font-size:10px;color:var(--tx3);margin-top:2px;}
+.daily-log-sync{height:30px;padding:0 10px;border:1px solid var(--hi-bd);border-radius:999px;background:var(--hi-bg);color:var(--acc);font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;}
+.daily-log-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px;}
+.daily-log-metric{padding:8px 6px;border:1px solid var(--bd);border-radius:11px;background:rgba(255,255,255,.82);text-align:center;}
+.daily-log-metric strong{display:block;font-size:15px;line-height:1.15;}
+.daily-log-metric span{display:block;margin-top:3px;font-size:9px;color:var(--tx3);}
+.daily-log-metric.result.deficit strong{color:var(--acc);}
+.daily-log-metric.result.surplus strong{color:var(--lo);}
+.daily-log-formula{margin:-2px 0 10px;padding:7px 9px;border-radius:9px;background:var(--sur2);color:var(--tx2);font-size:10px;line-height:1.45;text-align:center;}
+.daily-log-fields{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.daily-log-field label{display:block;margin-bottom:4px;font-size:10px;color:var(--tx3);}
+.daily-log-field input,.daily-log-field textarea{width:100%;min-width:0;border:1px solid var(--bd);border-radius:9px;background:var(--sur);color:var(--tx);font-size:12px;outline:none;}
+.daily-log-field input{height:36px;padding:6px 8px;}
+.daily-log-field textarea{height:58px;padding:8px;resize:vertical;line-height:1.4;}
+.daily-log-field input:focus,.daily-log-field textarea:focus{border-color:var(--acc);}
+.daily-log-field.note{grid-column:1/-1;}
+.daily-log-hint{font-size:9px;color:var(--tx3);margin-top:3px;line-height:1.35;}
+.muscle-label{margin:10px 0 6px;font-size:10px;color:var(--tx3);}
+.muscle-chips{display:flex;gap:6px;flex-wrap:wrap;}
+.muscle-chip{position:relative;cursor:pointer;}
+.muscle-chip input{position:absolute;opacity:0;pointer-events:none;}
+.muscle-chip span{display:block;padding:5px 9px;border:1px solid var(--bd);border-radius:999px;background:var(--sur);color:var(--tx2);font-size:11px;}
+.muscle-chip input:checked+span{border-color:var(--hi-bd);background:var(--hi-bg);color:var(--acc);font-weight:800;box-shadow:0 0 0 2px rgba(26,158,110,.08);}
+.daily-log-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;}
+.daily-log-status{font-size:9px;color:var(--tx3);line-height:1.35;}
+.daily-log-save{height:34px;padding:0 14px;border:none;border-radius:10px;background:var(--acc);color:#fff;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;}
+
 .pantry{padding:12px 14px;border-bottom:1px solid var(--bd);background:linear-gradient(180deg,#fff,#fafaf8);}
 .pantry-row{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;}
 .pantry-picked{min-height:38px;border:1px solid var(--bd);border-radius:12px;background:var(--sur);padding:6px;display:flex;gap:5px;flex-wrap:wrap;align-items:center;}
@@ -296,6 +326,9 @@ body{background:var(--bg);min-height:100vh;-webkit-font-smoothing:antialiased;}
   .fuel-ring{width:74px;height:74px;}
   .fuel-ring::after{width:48px;height:48px;}
   .fuel-center strong{font-size:14px;}
+  .daily-log-metrics{grid-template-columns:repeat(2,1fr);}
+  .daily-log-fields{grid-template-columns:1fr 1fr;}
+  .daily-log-field.note{grid-column:1/-1;}
 }
 
 @media (max-width:360px){
@@ -376,6 +409,7 @@ body{background:var(--bg);min-height:100vh;-webkit-font-smoothing:antialiased;}
     <div class="today-strip" id="todayStrip"></div>
   </div>
   <div class="coach-card" id="coachCard"></div>
+  <div class="daily-log-card" id="dailyLogCard"></div>
   <div class="meals" id="meals"></div>
 </div>
 </div>
@@ -457,6 +491,8 @@ const FOOD_AI_ENDPOINT='https://1.12.47.127/carb-api/v1/recognize';
 const FOOD_AI_ACCESS_KEY='benlee_carb_food_ai_access_v1';
 const FOOD_SYNC_ENDPOINT='https://1.12.47.127/carb-api/v1/foods';
 const FOOD_SYNC_ACCESS_KEY='benlee_carb_food_sync_access_v1';
+const DAILY_LOG_ENDPOINT='https://1.12.47.127/carb-api/v1/logs';
+const DAILY_LOG_KEY='benlee_carb_daily_logs_v1';
 let foodSyncBusy=false,foodSyncMessage='',foodSyncTone='';
 function loadCustomFoods(){
   try{
@@ -498,6 +534,44 @@ function getFoodSyncToken(interactive=false){
   return token;
 }
 function foodTime(value){const time=Date.parse(String(value||''));return Number.isFinite(time)?time:0;}
+function loadDailyLogs(){
+  try{
+    const book=JSON.parse(localStorage.getItem(DAILY_LOG_KEY)||'{"entries":[]}');
+    return Array.isArray(book?.entries)?book.entries.filter(x=>x&&/^\d{4}-\d{2}-\d{2}$/.test(x.date||'')):[];
+  }catch(e){return[];}
+}
+let dailyLogs=loadDailyLogs(),dailyLogSyncMessage='本机自动保存';
+function dailyLogId(row){return`${row?.profileKey||'p0'}|${row?.date||''}`;}
+function saveDailyLogs(sync=true){
+  try{localStorage.setItem(DAILY_LOG_KEY,JSON.stringify({version:1,entries:dailyLogs,updatedAt:new Date().toISOString()}));}
+  catch(e){alert('训练记录保存失败，请清理浏览器空间后重试。');return false;}
+  if(sync)queueFoodSync();
+  return true;
+}
+function mergeDailyLogs(remote={}){
+  const map=new Map();
+  [...dailyLogs,...(Array.isArray(remote.entries)?remote.entries:[])].forEach(row=>{
+    if(!row||!/^\d{4}-\d{2}-\d{2}$/.test(row.date||''))return;
+    const id=dailyLogId(row),old=map.get(id);
+    if(!old||foodTime(row.updatedAt)>=foodTime(old.updatedAt))map.set(id,{...row});
+  });
+  dailyLogs=[...map.values()].sort((a,b)=>dailyLogId(a).localeCompare(dailyLogId(b))).slice(-1000);
+  saveDailyLogs(false);
+  return{version:1,entries:dailyLogs};
+}
+function localDateText(date){
+  const y=date.getFullYear(),m=String(date.getMonth()+1).padStart(2,'0'),d=String(date.getDate()).padStart(2,'0');
+  return`${y}-${m}-${d}`;
+}
+function dateForDay(di){
+  const now=new Date(),monday=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  monday.setDate(monday.getDate()-((monday.getDay()+6)%7)+di);
+  return localDateText(monday);
+}
+function currentDailyLog(di){
+  const id=`p${activeProfile}|${dateForDay(di)}`;
+  return dailyLogs.find(row=>dailyLogId(row)===id)||null;
+}
 function setFoodSyncStatus(message,tone=''){
   foodSyncMessage=message;foodSyncTone=tone;
   const el=document.getElementById('foodSyncStatus');
@@ -536,10 +610,21 @@ async function syncCustomFoods(interactive=false){
     const saved=await fetch(FOOD_SYNC_ENDPOINT,{method:'PUT',headers,body:JSON.stringify(merged)});
     const savedData=await saved.json().catch(()=>({}));
     if(!saved.ok)throw Object.assign(new Error(savedData.error||`同步失败（${saved.status}）`),{status:saved.status});
+    const logResponse=await fetch(DAILY_LOG_ENDPOINT,{headers});
+    const logData=await logResponse.json().catch(()=>({}));
+    if(!logResponse.ok)throw Object.assign(new Error(logData.error||`记录同步失败（${logResponse.status}）`),{status:logResponse.status});
+    const logBook=mergeDailyLogs(logData.logBook||{});
+    const logSaved=await fetch(DAILY_LOG_ENDPOINT,{method:'PUT',headers,body:JSON.stringify(logBook)});
+    const logSavedData=await logSaved.json().catch(()=>({}));
+    if(!logSaved.ok)throw Object.assign(new Error(logSavedData.error||`记录同步失败（${logSaved.status}）`),{status:logSaved.status});
+    dailyLogSyncMessage=`云端已同步 · ${new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})}`;
     setFoodSyncStatus(`已同步到服务器 · ${new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})}`,'ok');
+    if(document.getElementById('dailyLogCard'))renderDailyLogCard(selDay);
   }catch(error){
     if(error.status===401)try{localStorage.removeItem(FOOD_SYNC_ACCESS_KEY);}catch(e){}
+    dailyLogSyncMessage=error.status===401?'同步码不正确':'云端暂未同步，本机记录已保留';
     setFoodSyncStatus(error.status===401?'同步码不正确，请重新点击“云同步”。':'服务器暂时未同步，本机数据已保留，稍后可重试。','err');
+    if(document.getElementById('dailyLogCard'))renderDailyLogCard(selDay);
   }finally{foodSyncBusy=false;}
 }
 function queueFoodSync(){
@@ -1139,6 +1224,80 @@ function renderCoachCard(di,t){
     </div>`;
 }
 
+const MUSCLE_GROUPS=['胸','肩','背','腿','臀','手臂','核心','有氧','拉伸','休息'];
+function renderDailyLogCard(di){
+  const box=document.getElementById('dailyLogCard');if(!box)return;
+  const log=currentDailyLog(di)||{};
+  const selected=new Set(Array.isArray(log.muscleGroups)?log.muscleGroups:[]);
+  const mealIntake=Math.round(dayM(di).k);
+  const manualIntake=log.intakeKcal===null||log.intakeKcal===undefined?'':Math.round(+log.intakeKcal||0);
+  box.innerHTML=`
+    <div class="daily-log-head">
+      <div><div class="daily-log-title">今日热量缺口与训练记录</div><div class="daily-log-date">${dateForDay(di)} · ${escapeHtml(currentProfile().name)}</div></div>
+      <button class="daily-log-sync" type="button" onclick="syncDailyLogCard(${di})">☁️ 同步记录</button>
+    </div>
+    <div class="daily-log-metrics">
+      <div class="daily-log-metric"><strong id="logIntakeMetric">${manualIntake===''?mealIntake:manualIntake}</strong><span>实际摄入 kcal</span></div>
+      <div class="daily-log-metric"><strong id="logExerciseMetric">${Math.round(+log.exerciseKcal||0)}</strong><span>运动消耗 kcal</span></div>
+      <div class="daily-log-metric"><strong id="logOutputMetric">—</strong><span>总消耗 kcal</span></div>
+      <div class="daily-log-metric result" id="logResultMetric"><strong>—</strong><span>热量缺口</span></div>
+    </div>
+    <div class="daily-log-formula" id="dailyLogFormula">正在计算…</div>
+    <div class="daily-log-fields">
+      <div class="daily-log-field"><label for="logIntakeInput">实际吃了多少 kcal</label><input id="logIntakeInput" type="number" min="0" max="10000" inputmode="numeric" placeholder="餐单 ${mealIntake}" value="${manualIntake}" oninput="updateDailyLogPreview(${di});scheduleDailyLogSave(${di})"><div class="daily-log-hint">留空就自动使用今天餐单总热量</div></div>
+      <div class="daily-log-field"><label for="logExerciseInput">运动消耗 kcal</label><input id="logExerciseInput" type="number" min="0" max="5000" inputmode="numeric" placeholder="例如 320" value="${Math.round(+log.exerciseKcal||0)||''}" oninput="updateDailyLogPreview(${di});scheduleDailyLogSave(${di})"><div class="daily-log-hint">填写手表或器械给出的估算值</div></div>
+      <div class="daily-log-field"><label for="logDurationInput">训练时长 分钟</label><input id="logDurationInput" type="number" min="0" max="1440" inputmode="numeric" placeholder="例如 60" value="${Math.round(+log.durationMin||0)||''}" oninput="scheduleDailyLogSave(${di})"><div class="daily-log-hint">只做记录，不额外重复算热量</div></div>
+      <div class="daily-log-field note"><label for="logNoteInput">训练备注</label><textarea id="logNoteInput" maxlength="160" placeholder="例如：卧推 4×8、肩推 3×10，状态不错" oninput="scheduleDailyLogSave(${di})">${escapeHtml(log.note||'')}</textarea></div>
+    </div>
+    <div class="muscle-label">今天练了什么（可多选）</div>
+    <div class="muscle-chips">${MUSCLE_GROUPS.map(name=>`<label class="muscle-chip"><input type="checkbox" value="${name}" ${selected.has(name)?'checked':''} onchange="scheduleDailyLogSave(${di})"><span>${name}</span></label>`).join('')}</div>
+    <div class="daily-log-foot"><div class="daily-log-status" id="dailyLogStatus">${escapeHtml(dailyLogSyncMessage)} · 修改后自动保存</div><button class="daily-log-save" type="button" onclick="saveDailyLogFromForm(${di},true)">保存今天记录</button></div>`;
+  updateDailyLogPreview(di);
+}
+function dailyLogFormValues(di){
+  const intakeEl=document.getElementById('logIntakeInput');
+  const raw=String(intakeEl?.value??'').trim();
+  return{
+    date:dateForDay(di),profileKey:`p${activeProfile}`,profileName:currentProfile().name,
+    intakeKcal:raw===''?null:Math.max(0,Math.min(10000,Math.round(+raw||0))),
+    exerciseKcal:Math.max(0,Math.min(5000,Math.round(+document.getElementById('logExerciseInput')?.value||0))),
+    durationMin:Math.max(0,Math.min(1440,Math.round(+document.getElementById('logDurationInput')?.value||0))),
+    muscleGroups:[...document.querySelectorAll('#dailyLogCard .muscle-chip input:checked')].map(el=>el.value),
+    note:String(document.getElementById('logNoteInput')?.value||'').replace(/[<>]/g,'').trim().slice(0,160),
+    updatedAt:new Date().toISOString()
+  };
+}
+function updateDailyLogPreview(di){
+  const intakeEl=document.getElementById('logIntakeInput'),exerciseEl=document.getElementById('logExerciseInput');
+  if(!intakeEl||!exerciseEl)return;
+  const mealIntake=Math.round(dayM(di).k),raw=String(intakeEl.value||'').trim();
+  const intake=raw===''?mealIntake:Math.max(0,+raw||0);
+  const exercise=Math.max(0,+exerciseEl.value||0);
+  const maintenance=Math.round(userEnergyProfile().tdee||0),output=Math.round(maintenance+exercise),gap=Math.round(output-intake);
+  document.getElementById('logIntakeMetric').textContent=Math.round(intake);
+  document.getElementById('logExerciseMetric').textContent=Math.round(exercise);
+  document.getElementById('logOutputMetric').textContent=output;
+  const result=document.getElementById('logResultMetric');
+  result.classList.toggle('deficit',gap>=0);result.classList.toggle('surplus',gap<0);
+  result.querySelector('strong').textContent=Math.abs(gap);
+  result.querySelector('span').textContent=gap>=0?'热量缺口 kcal':'热量盈余 kcal';
+  document.getElementById('dailyLogFormula').textContent=`维持消耗 ${maintenance} + 运动 ${Math.round(exercise)} − 摄入 ${Math.round(intake)} = ${gap>=0?'缺口':'盈余'} ${Math.abs(gap)} kcal`;
+}
+function saveDailyLogFromForm(di,notify=false){
+  const row=dailyLogFormValues(di),id=dailyLogId(row),index=dailyLogs.findIndex(x=>dailyLogId(x)===id);
+  if(index>=0)dailyLogs[index]=row;else dailyLogs.push(row);
+  dailyLogSyncMessage=getFoodSyncToken(false)?'本机已保存，等待云端同步':'本机已保存；输入同步码后可跨设备同步';
+  saveDailyLogs(true);
+  const status=document.getElementById('dailyLogStatus');if(status)status.textContent=`${dailyLogSyncMessage} · ${new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})}`;
+  if(notify&&status)status.textContent=`今天记录已保存 · ${new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})}`;
+}
+function scheduleDailyLogSave(di){
+  clearTimeout(window._dailyLogSaveTimer);window._dailyLogSaveTimer=setTimeout(()=>saveDailyLogFromForm(di,false),450);
+}
+function syncDailyLogCard(di){
+  clearTimeout(window._dailyLogSaveTimer);saveDailyLogFromForm(di,false);syncCustomFoods(true);
+}
+
 function renderDetail(){
   const di=selDay;const t=targetForDay(di);const dm=dayM(di);
   document.getElementById('d-ttl').innerHTML=`<span>${DAYS[di]} · ${TM[wT[di]].lbl}日</span><span class="meal-actions"><button class="btn-auto" onclick="autoDistributeDay(${di})">⚖ 分配</button><button class="btn-auto" onclick="saveMealTemplate(${di})">💾 保存</button><button class="btn-auto" onclick="applyMealTemplate(${di})">📋 套用</button></span>`;
@@ -1151,6 +1310,7 @@ function renderDetail(){
   document.getElementById('d-bs').innerHTML=
     badge('碳',dm.c,t.carb,'g',isDing)+badge('脂',dm.f,t.fat,'g',isDing)+badge('蛋',dm.p,t.prot,'g',isDing)+badge('热',dm.k,t.kcal,'k');
   renderCoachCard(di,t);
+  renderDailyLogCard(di);
   const ml=document.getElementById('meals');ml.innerHTML='';
   const pantry=document.createElement('div');pantry.className='pantry';
   const picked=pantryFoods[di]||[];
