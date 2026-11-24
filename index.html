@@ -46,6 +46,11 @@ body{background:var(--bg);min-height:100vh;-webkit-font-smoothing:antialiased;}
 .prof-use.on{border-color:var(--acc);background:var(--hi-bg);color:var(--acc);font-weight:700;}
 .prof-save{font-weight:700;color:var(--acc);}
 .prof-use:hover,.prof-save:hover{border-color:var(--acc);}
+.full-sync-box{display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:center;margin:0 0 10px;padding:9px;border:1px solid #dcebe4;border-radius:12px;background:#f7faf8;}
+.full-sync-btn{height:34px;padding:0 12px;border:none;border-radius:10px;background:var(--acc);color:#fff;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;}
+.full-sync-copy{min-width:0;font-size:10px;color:var(--tx2);line-height:1.45;}
+.full-sync-status{display:block;color:var(--tx3);}
+.full-sync-status.ok{color:var(--acc);}.full-sync-status.err{color:#cf3d2e;}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:10px;}
 .spc{background:var(--sur2);border-radius:12px;padding:8px 5px;text-align:center;}
 .spc .v{font-size:15px;font-weight:700;}
@@ -362,6 +367,7 @@ body{background:var(--bg);min-height:100vh;-webkit-font-smoothing:antialiased;}
     <div class="ff"><label>日常活动（不含当天训练）</label><select id="i-activity" onchange="calcUser()"><option value="1.2">久坐少动 ×1.20</option><option value="1.375" selected>轻度活动 ×1.375</option><option value="1.55">中等活动 ×1.55</option><option value="1.725">高度活动 ×1.725</option></select></div>
   </div>
   <div class="profiles" id="profiles"></div>
+  <div class="full-sync-box"><button class="full-sync-btn" type="button" onclick="syncCustomFoods(true)">☁️ 完整同步</button><div class="full-sync-copy">同步用户资料、周安排、餐单克数、餐单模板、食物库和训练记录<span class="full-sync-status" id="fullSyncStatus">原电脑先点一次，新电脑再用同一个同步码</span></div></div>
   <button class="btn-calc" onclick="calcUser()">计算每日目标</button>
   <div class="stats" id="statsRow" style="display:none">
     <div class="spc"><div class="v" id="s-bmr">—</div><div class="l">周碳水 g</div></div>
@@ -493,6 +499,9 @@ const FOOD_SYNC_ENDPOINT='https://1.12.47.127/carb-api/v1/foods';
 const FOOD_SYNC_ACCESS_KEY='benlee_carb_food_sync_access_v1';
 const DAILY_LOG_ENDPOINT='https://1.12.47.127/carb-api/v1/logs';
 const DAILY_LOG_KEY='benlee_carb_daily_logs_v1';
+const FULL_STATE_ENDPOINT='https://1.12.47.127/carb-api/v1/state';
+const FULL_SYNC_META_KEY='benlee_carb_full_sync_meta_v1';
+const CURRENT_PLAN_KEY='benlee_carb_current_plans_v1';
 let foodSyncBusy=false,foodSyncMessage='',foodSyncTone='';
 function loadCustomFoods(){
   try{
@@ -529,7 +538,7 @@ function getFoodSyncToken(interactive=false){
   let token='';
   try{token=localStorage.getItem(FOOD_SYNC_ACCESS_KEY)||'';}catch(e){}
   if(token||!interactive)return token;
-  token=String(prompt('首次使用请输入食物云同步码（只需输入一次）')||'').trim();
+  token=String(prompt('首次使用请输入云端同步码（只需输入一次）')||'').trim();
   if(token)try{localStorage.setItem(FOOD_SYNC_ACCESS_KEY,token);}catch(e){}
   return token;
 }
@@ -598,9 +607,13 @@ function applyMergedFoodLibrary(remote={}){
 }
 async function syncCustomFoods(interactive=false){
   if(foodSyncBusy)return;
+  if(interactive&&syncInitializationReady){
+    clearTimeout(window._currentPlanTimer);saveCurrentPlanNow(true);
+    if(localStorage.getItem(PROFILE_KEY)!==null){const rows=loadProfiles();rows[activeProfile]=currentProfile();saveProfiles(rows);}
+  }
   const token=getFoodSyncToken(interactive);
-  if(!token){if(interactive)setFoodSyncStatus('没有输入同步码，本机食物仍已保存。','err');return;}
-  foodSyncBusy=true;setFoodSyncStatus('正在同步到服务器…');
+  if(!token){if(interactive){setFoodSyncStatus('没有输入同步码，本机食物仍已保存。','err');setFullSyncStatus('没有输入同步码，本机数据没有丢失','err');}return;}
+  foodSyncBusy=true;setFoodSyncStatus('正在同步到服务器…');setFullSyncStatus('正在合并本机与服务器数据…');
   try{
     const headers={Authorization:`Bearer ${token}`,'Content-Type':'application/json'};
     const response=await fetch(FOOD_SYNC_ENDPOINT,{headers});
@@ -617,19 +630,23 @@ async function syncCustomFoods(interactive=false){
     const logSaved=await fetch(DAILY_LOG_ENDPOINT,{method:'PUT',headers,body:JSON.stringify(logBook)});
     const logSavedData=await logSaved.json().catch(()=>({}));
     if(!logSaved.ok)throw Object.assign(new Error(logSavedData.error||`记录同步失败（${logSaved.status}）`),{status:logSaved.status});
+    const stateResult=await syncBrowserStateWithHeaders(headers);
     dailyLogSyncMessage=`云端已同步 · ${new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})}`;
     setFoodSyncStatus(`已同步到服务器 · ${new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})}`,'ok');
+    setFullSyncStatus(`完整同步成功 · 服务器保留 ${stateResult.snapshots} 份快照`,'ok');
     if(document.getElementById('dailyLogCard'))renderDailyLogCard(selDay);
+    if(stateResult.restored)setTimeout(()=>location.reload(),450);
   }catch(error){
     if(error.status===401)try{localStorage.removeItem(FOOD_SYNC_ACCESS_KEY);}catch(e){}
     dailyLogSyncMessage=error.status===401?'同步码不正确':'云端暂未同步，本机记录已保留';
     setFoodSyncStatus(error.status===401?'同步码不正确，请重新点击“云同步”。':'服务器暂时未同步，本机数据已保留，稍后可重试。','err');
+    setFullSyncStatus(error.status===401?'同步码不正确，请重新点击“完整同步”':'服务器暂时未完成同步，本机数据仍然保留','err');
     if(document.getElementById('dailyLogCard'))renderDailyLogCard(selDay);
   }finally{foodSyncBusy=false;}
 }
 function queueFoodSync(){
   if(!getFoodSyncToken(false))return;
-  clearTimeout(window._foodSyncTimer);window._foodSyncTimer=setTimeout(()=>syncCustomFoods(false),300);
+  clearTimeout(window._foodSyncTimer);window._foodSyncTimer=setTimeout(()=>syncCustomFoods(false),600);
 }
 const DOTCOL={carb:'#1a9e6e',fat:'#f0a030',prot:'#2f7ed4',veg:'#7ab648',oil:'#d46030'};
 const PRI={veg:0,carb:1,prot:2,fat:3,oil:4};
@@ -656,6 +673,92 @@ const TRAINING_PLANS={
 const PROFILE_KEY='benlee_carb_profiles_v8';
 const MEAL_TPL_KEY='benlee_carb_meal_templates_v8';
 const FLEX_PLAN_KEY='benlee_carb_flexible_week_v1';
+const FULL_SYNC_COMPONENTS={profiles:PROFILE_KEY,flexPlan:FLEX_PLAN_KEY,mealTemplates:MEAL_TPL_KEY,currentPlans:CURRENT_PLAN_KEY};
+
+let syncInitializationReady=false,planPersistenceReady=false,fullSyncTone='';
+function loadFullSyncMeta(){
+  try{const value=JSON.parse(localStorage.getItem(FULL_SYNC_META_KEY)||'{}');return value&&typeof value==='object'?value:{};}catch(e){return{};}
+}
+function saveFullSyncMeta(meta){try{localStorage.setItem(FULL_SYNC_META_KEY,JSON.stringify(meta));}catch(e){}}
+function markSyncComponent(name,queue=true){
+  if(!syncInitializationReady||!FULL_SYNC_COMPONENTS[name])return;
+  const meta=loadFullSyncMeta();meta[name]=new Date().toISOString();saveFullSyncMeta(meta);
+  if(queue)queueFoodSync();
+}
+function setFullSyncStatus(message,tone=''){
+  fullSyncTone=tone;const el=document.getElementById('fullSyncStatus');
+  if(el){el.textContent=message;el.className=`full-sync-status ${tone}`;}
+}
+function readStoredJson(key){try{const raw=localStorage.getItem(key);return raw===null?null:JSON.parse(raw);}catch(e){return null;}}
+function cleanCurrentMeals(){
+  return meals.map(day=>day.map(items=>items.filter(it=>it&&DB[it.n]).map(it=>({n:it.n,g:+it.g||0,lk:it.lk?1:0,keep:it.keep?1:0,manual:it.manual?1:0}))));
+}
+function saveCurrentPlanNow(mark=true){
+  if(!planPersistenceReady&&mark)return;
+  const store=readStoredJson(CURRENT_PLAN_KEY)||{};
+  store[`p${activeProfile}`]={meals:cleanCurrentMeals(),pantryFoods:pantryFoods.map(list=>[...new Set((list||[]).filter(name=>DB[name]))]),selDay,weekKey:currentWeekKey(),savedAt:new Date().toISOString()};
+  try{localStorage.setItem(CURRENT_PLAN_KEY,JSON.stringify(store));if(mark)markSyncComponent('currentPlans');}catch(e){}
+}
+function scheduleCurrentPlanSave(){
+  if(!planPersistenceReady)return;
+  clearTimeout(window._currentPlanTimer);window._currentPlanTimer=setTimeout(()=>saveCurrentPlanNow(true),350);
+}
+function restoreCurrentPlanForActiveProfile(){
+  const row=(readStoredJson(CURRENT_PLAN_KEY)||{})[`p${activeProfile}`];
+  if(!row||!Array.isArray(row.meals)||row.meals.length!==7)return false;
+  const restored=row.meals.map(day=>Array.isArray(day)?day.map(items=>Array.isArray(items)?items.filter(it=>it&&DB[it.n]).map(it=>({...it,g:+it.g||0,lk:it.lk?1:0})):[]):[[],[],[],[]]);
+  if(restored.some(day=>day.length!==4))return false;
+  meals=restored;
+  pantryFoods=Array.from({length:7},(_,i)=>Array.isArray(row.pantryFoods?.[i])?row.pantryFoods[i].filter(name=>DB[name]):[]);
+  selDay=Math.max(0,Math.min(6,+row.selDay||0));
+  return true;
+}
+function ensureLocalStateForFirstUpload(){
+  const now=new Date().toISOString(),meta=loadFullSyncMeta();
+  const profiles=loadProfiles();profiles[activeProfile]=currentProfile();
+  try{localStorage.setItem(PROFILE_KEY,JSON.stringify(profiles));}catch(e){}
+  saveCurrentPlanNow(false);
+  Object.entries(FULL_SYNC_COMPONENTS).forEach(([name,key])=>{if(localStorage.getItem(key)!==null&&!meta[name])meta[name]=now;});
+  saveFullSyncMeta(meta);
+}
+function captureLocalBrowserState(){
+  const meta=loadFullSyncMeta(),components={};
+  Object.entries(FULL_SYNC_COMPONENTS).forEach(([name,key])=>{
+    const value=readStoredJson(key);if(value===null||!meta[name])return;
+    components[name]={updatedAt:meta[name],value};
+  });
+  return{version:1,components};
+}
+function applyMergedBrowserState(remote={}){
+  const meta=loadFullSyncMeta(),merged={},components=remote?.components||{};let restored=false;
+  Object.entries(FULL_SYNC_COMPONENTS).forEach(([name,key])=>{
+    const remoteRow=components[name],localValue=readStoredJson(key),localAt=meta[name]||'';
+    if(remoteRow&&(!localAt||Date.parse(remoteRow.updatedAt)>=Date.parse(localAt))){
+      merged[name]=remoteRow;
+      if(localValue===null||JSON.stringify(localValue)!==JSON.stringify(remoteRow.value))restored=true;
+      try{localStorage.setItem(key,JSON.stringify(remoteRow.value));}catch(e){}
+      meta[name]=remoteRow.updatedAt;
+    }else if(localValue!==null&&localAt){merged[name]={updatedAt:localAt,value:localValue};}
+  });
+  saveFullSyncMeta(meta);
+  return{state:{version:1,components:merged},restored};
+}
+async function syncBrowserStateWithHeaders(headers){
+  const response=await fetch(FULL_STATE_ENDPOINT,{headers});
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok)throw Object.assign(new Error(data.error||`完整同步失败（${response.status}）`),{status:response.status});
+  const remote=data.stateBook?.current||{components:{}};
+  if(!Object.keys(remote.components||{}).length)ensureLocalStateForFirstUpload();
+  const local=captureLocalBrowserState();
+  const selected=applyMergedBrowserState({components:{...(remote.components||{}),...Object.fromEntries(Object.entries(local.components||{}).map(([name,row])=>{
+    const other=remote.components?.[name];return[name,!other||Date.parse(row.updatedAt)>=Date.parse(other.updatedAt)?row:other];
+  }))}});
+  const saved=await fetch(FULL_STATE_ENDPOINT,{method:'PUT',headers,body:JSON.stringify({deviceName:'网页浏览器',...selected.state})});
+  const savedData=await saved.json().catch(()=>({}));
+  if(!saved.ok)throw Object.assign(new Error(savedData.error||`完整同步失败（${saved.status}）`),{status:saved.status});
+  const finalState=applyMergedBrowserState(savedData.stateBook?.current||selected.state);
+  return{restored:selected.restored||finalState.restored,snapshots:savedData.stateBook?.snapshots?.length||0};
+}
 
 let tgt={high:{kcal:1403,carb:159,fat:47,prot:86},mid:{kcal:1247,carb:90,fat:60,prot:86},low:{kcal:1091,carb:37,fat:66,prot:86}};
 let wT=['mid','high','mid','high','low','mid','low'];
@@ -774,7 +877,7 @@ function loadProfiles(){
 }
 
 function saveProfiles(list){
-  try{localStorage.setItem(PROFILE_KEY,JSON.stringify(list));}catch(e){}
+  try{localStorage.setItem(PROFILE_KEY,JSON.stringify(list));markSyncComponent('profiles');}catch(e){}
 }
 
 function currentProfile(){
@@ -829,6 +932,7 @@ function renderProfiles(){
 }
 
 function saveProfile(i){
+  saveCurrentPlanNow(true);
   const list=loadProfiles();
   list[i]=currentProfile();
   activeProfile=i;
@@ -838,12 +942,15 @@ function saveProfile(i){
 }
 
 function useProfile(i){
+  saveCurrentPlanNow(true);
   const list=loadProfiles();
   if(!list[i]){saveProfile(i);return;}
   activeProfile=i;
   fillProfile(list[i]);
   renderProfiles();
   calcUser();
+  restoreCurrentPlanForActiveProfile();
+  renderWeek();renderDetail();
 }
 
 let recalculateTimer=null;
@@ -943,7 +1050,7 @@ function loadFlexProfileState(){
 
 function saveFlexProfileState(store,state,key=`p${activeProfile}`){
   store.weekKey=currentWeekKey();store.profiles=store.profiles||{};store.profiles[key]=state;
-  try{localStorage.setItem(FLEX_PLAN_KEY,JSON.stringify(store));}catch(e){}
+  try{localStorage.setItem(FLEX_PLAN_KEY,JSON.stringify(store));markSyncComponent('flexPlan');}catch(e){}
 }
 
 function flexTargetFromKcal(kcal,base){
@@ -1334,6 +1441,7 @@ function renderDetail(){
     ab.onclick=()=>openModal(di,mi);ar.appendChild(ab);blk.appendChild(ar);
     ml.appendChild(blk);
   });
+  scheduleCurrentPlanSave();
 }
 
 function cloneMeals(dayMeals){
@@ -1353,7 +1461,7 @@ function loadMealTemplates(){
 }
 
 function saveMealTemplates(data){
-  try{localStorage.setItem(MEAL_TPL_KEY,JSON.stringify(data));}catch(e){}
+  try{localStorage.setItem(MEAL_TPL_KEY,JSON.stringify(data));markSyncComponent('mealTemplates');}catch(e){}
 }
 
 function saveMealTemplate(di){
@@ -2915,8 +3023,11 @@ document.getElementById('ov').onclick=e=>{if(e.target===document.getElementById(
 const profiles=loadProfiles();
 fillProfile(profiles[0]||defaultProfiles()[0]);
 renderProfiles();
-applyTrainingPlan();selectDay(isFlexPlan()?todayIndex():(+document.getElementById('startDay').value||0));
-setTimeout(()=>syncCustomFoods(false),500);
+applyTrainingPlan();
+const restoredCurrentPlan=restoreCurrentPlanForActiveProfile();
+selectDay(restoredCurrentPlan?selDay:(isFlexPlan()?todayIndex():(+document.getElementById('startDay').value||0)));
+setTimeout(async()=>{await syncCustomFoods(false);syncInitializationReady=true;planPersistenceReady=true;},500);
+window.addEventListener('beforeunload',()=>{if(planPersistenceReady)saveCurrentPlanNow(true);});
 
 function syncStickyOffset(){
   const header=document.querySelector('.hd');
