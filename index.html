@@ -160,6 +160,8 @@ body{background:var(--bg);min-height:100vh;-webkit-font-smoothing:antialiased;}
 .pantry-help{font-size:11px;color:var(--tx3);line-height:1.45;margin-top:7px;}
 .food-pick-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;max-height:56vh;overflow-y:auto;margin-bottom:12px;}
 .food-pick{min-height:34px;text-align:left;padding:7px 9px;border:1px solid var(--bd);border-radius:10px;background:var(--sur2);color:var(--tx);font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;}
+.food-pick-name{min-width:0;overflow-wrap:anywhere;}
+.mini-btn.danger.food-delete-btn{min-width:50px;min-height:36px;padding:5px 9px;font-size:12px;white-space:nowrap;}
 .food-pick.good{border-color:var(--hi-bd);background:var(--hi-bg);}
 .food-pick.caution{border-color:var(--warn-bd);background:var(--warn-bg);}
 .food-pick.avoid{border-color:var(--lo-bd);background:var(--lo-bg);}
@@ -291,6 +293,12 @@ body{background:var(--bg);min-height:100vh;-webkit-font-smoothing:antialiased;}
 .custom-food-meta{font-size:10px;color:var(--tx3);margin-top:2px;}
 .custom-food-btns{display:flex;gap:4px;}
 .custom-food-empty{font-size:11px;color:var(--tx3);padding:9px;text-align:center;border:1px dashed var(--bd);border-radius:10px;}
+.food-library-add{width:100%;min-height:40px;}
+.food-library-filter{width:100%;height:38px;border:1px solid var(--bd);border-radius:10px;background:var(--sur);padding:0 9px;font-size:14px;margin-bottom:8px;}
+.food-library-label{font-size:12px;font-weight:700;color:var(--tx2);margin:10px 0 5px;}
+.food-library-removed{margin-top:10px;font-size:12px;color:var(--tx2);}
+.food-library-removed summary{cursor:pointer;padding:6px 0;}
+.food-library-removed .custom-food-list{margin-top:5px;}
 .add-own-food{width:100%;margin-top:8px;min-height:38px;border:1px dashed var(--hi-bd);border-radius:11px;background:var(--hi-bg);color:var(--acc);font-size:12px;font-weight:700;cursor:pointer;}
 .form-error{display:none;margin-top:8px;padding:7px 9px;border-radius:8px;background:var(--lo-bg);color:var(--lo);font-size:11px;line-height:1.45;}
 .food-search-row{display:grid;grid-template-columns:1fr auto;gap:7px;}
@@ -303,8 +311,10 @@ body{background:var(--bg);min-height:100vh;-webkit-font-smoothing:antialiased;}
 .food-result-name{font-size:12px;font-weight:700;color:var(--tx);}
 .food-result-brand,.food-result-macro{font-size:10px;color:var(--tx3);margin-top:2px;}
 .food-result-kcal{font-size:12px;color:var(--acc);font-weight:700;white-space:nowrap;}
-.upload-box{display:block;border:1px dashed var(--hi-bd);background:var(--hi-bg);color:var(--acc);border-radius:12px;padding:14px;text-align:center;font-size:12px;font-weight:700;cursor:pointer;}
-.upload-box input{display:none;}
+.food-photo-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.upload-box{position:relative;display:flex;align-items:center;justify-content:center;gap:5px;min-height:44px;border:1px dashed var(--hi-bd);background:var(--hi-bg);color:var(--acc);border-radius:12px;padding:8px;text-align:center;font-size:13px;font-weight:700;cursor:pointer;}
+.upload-box:focus-within{outline:2px solid var(--acc);outline-offset:2px;}
+.upload-box input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;}
 .ocr-preview{display:none;max-width:100%;max-height:190px;margin:8px auto;border-radius:10px;border:1px solid var(--bd);object-fit:contain;}
 .source-note{margin-bottom:9px;padding:7px 9px;background:#f7faf8;border:1px solid #dcebe4;border-radius:9px;color:var(--tx2);font-size:10px;line-height:1.4;}
 
@@ -493,6 +503,7 @@ const DB={
 const BUILTIN_FOOD_NAMES=Object.keys(DB);
 const CUSTOM_FOOD_KEY='benlee_carb_custom_foods_v1';
 const CUSTOM_FOOD_DELETED_KEY='benlee_carb_custom_food_deleted_v1';
+const HIDDEN_FOOD_KEY='benlee_carb_hidden_foods_v1';
 const FOOD_AI_ENDPOINT='https://1.12.47.127/carb-api/v1/recognize';
 const FOOD_AI_ACCESS_KEY='benlee_carb_food_ai_access_v1';
 const FOOD_SYNC_ENDPOINT='https://1.12.47.127/carb-api/v1/foods';
@@ -523,8 +534,24 @@ function loadFoodDeletions(){
 let customFoods=loadCustomFoods().filter(x=>!BUILTIN_FOOD_NAMES.includes(x.name));
 let customFoodDeletions=loadFoodDeletions();
 customFoods.forEach(x=>{if(!DB[x.name])DB[x.name]={...x};});
-let FN=Object.keys(DB);
-function refreshFoodNames(){FN=Object.keys(DB);}
+function loadHiddenFoods(){
+  try{
+    const names=JSON.parse(localStorage.getItem(HIDDEN_FOOD_KEY)||'[]');
+    return new Set(Array.isArray(names)?names.filter(name=>typeof name==='string'):[]);
+  }catch(e){return new Set();}
+}
+let hiddenFoods=loadHiddenFoods();
+function isAvailableFood(name){return typeof name==='string'&&Object.hasOwn(DB,name)&&!hiddenFoods.has(name);}
+let FN=Object.keys(DB).filter(isAvailableFood);
+function refreshFoodNames(){FN=Object.keys(DB).filter(isAvailableFood);}
+function setFoodHidden(name,hidden){
+  const next=new Set(hiddenFoods);
+  if(hidden)next.add(name);else next.delete(name);
+  try{localStorage.setItem(HIDDEN_FOOD_KEY,JSON.stringify([...next]));}
+  catch(e){alert('食物库保存失败，未改变食物列表。');return false;}
+  hiddenFoods=next;refreshFoodNames();
+  return true;
+}
 function saveCustomFoods(sync=true){
   try{
     localStorage.setItem(CUSTOM_FOOD_KEY,JSON.stringify(customFoods));
@@ -1420,11 +1447,11 @@ function renderDetail(){
   renderDailyLogCard(di);
   const ml=document.getElementById('meals');ml.innerHTML='';
   const pantry=document.createElement('div');pantry.className='pantry';
-  const picked=pantryFoods[di]||[];
+  const picked=(pantryFoods[di]||[]).filter(isAvailableFood);
   const chips=picked.length?picked.map(n=>`<span class="food-chip">${escapeHtml(n)}</span>`).join(''):'<span class="pantry-empty">还没选择今天可用的食物</span>';
   pantry.innerHTML=
     `<div class="pantry-row"><div class="pantry-picked">${chips}</div><button class="pantry-btn sec" onclick="openPantryPicker(${di})">选择食物</button><button class="pantry-btn" onclick="buildDayFromPantry(${di})">生成餐单</button></div>`+
-    `<button class="add-own-food" type="button" onclick="openFoodHub({kind:'pantry',di:${di}})">＋ 添加食物</button>`+
+    `<button class="add-own-food" type="button" onclick="openFoodHub({kind:'pantry',di:${di}})">食物库</button>`+
     `<div class="pantry-help">只能从食物库多选，系统会按早餐/午餐/加餐/晚餐逻辑排餐，${isDing?'叮叮模式只按热量配平。':`再按当前${TM[wT[di]].lbl}目标配平。`}</div>`;
   ml.appendChild(pantry);
   meals[di].forEach((items,mi)=>{
@@ -1598,9 +1625,9 @@ function normFoodText(s){return String(s||'').trim().replace(/[，。、；;,.]/
 function resolveFoodName(token){
   const raw=String(token||'').trim();
   if(!raw)return'';
-  if(DB[raw])return raw;
+  if(isAvailableFood(raw))return raw;
   const key=normFoodText(raw);
-  if(FOOD_ALIASES[key]&&DB[FOOD_ALIASES[key]])return FOOD_ALIASES[key];
+  if(isAvailableFood(FOOD_ALIASES[key]))return FOOD_ALIASES[key];
   return FN.find(n=>normFoodText(n)===key)||
     FN.find(n=>normFoodText(n).includes(key)||key.includes(normFoodText(n)))||'';
 }
@@ -1611,7 +1638,7 @@ function parseFoodList(text){
 }
 
 function openPantryPicker(di){
-  const selected=new Set(pantryFoods[di]||[]);
+  const selected=new Set((pantryFoods[di]||[]).filter(isAvailableFood));
   const dayType=wT[di];
   const guide={
     high:'高碳日优先：米饭 / 土豆 / 番薯 / 玉米 / 低脂蛋白；坚果、油、全脂奶、高脂燕麦少选。',
@@ -1632,17 +1659,21 @@ function openPantryPicker(di){
     b.type='button';
     b.className='food-pick '+rank.cls+(selected.has(name)?' on':'');
     b.dataset.name=name;
-    b.innerHTML=`<span class="food-pick-dot" style="background:${DOTCOL[d.cat]||'#aaa'}"></span><span>${escapeHtml(name)}</span>${rank.label?`<span class="food-pick-badge">${rank.label}</span>`:''}`;
+    b.innerHTML=`<span class="food-pick-dot" style="background:${DOTCOL[d.cat]||'#aaa'}"></span><span class="food-pick-name">${escapeHtml(name)}</span>${rank.label?`<span class="food-pick-badge">${rank.label}</span>`:''}`;
+    b.setAttribute('aria-pressed',String(selected.has(name)));
     b.onclick=()=>{
       if(selected.has(name))selected.delete(name);else selected.add(name);
       b.classList.toggle('on',selected.has(name));
+      b.setAttribute('aria-pressed',String(selected.has(name)));
     };
     grid.appendChild(b);
   });
+  if(!FN.length)grid.textContent='没有可选的食物，请到食物库添加或恢复。';
   document.getElementById('m-btns').innerHTML=
     `<button class="bsec" onclick="closeModal()">取消</button>`+
     `<button class="bpri" onclick="savePantryPicker(${di})">保存选择</button>`;
   window._pantryDraft=selected;
+  document.querySelector('#ov .modal').classList.add('wide');
   document.getElementById('ov').classList.add('open');
 }
 
@@ -1687,7 +1718,7 @@ function foodPickRank(name,type){
 }
 
 function savePantryPicker(di){
-  pantryFoods[di]=Array.from(window._pantryDraft||[]);
+  pantryFoods[di]=Array.from(window._pantryDraft||[]).filter(isAvailableFood);
   window._pantryDraft=null;
   closeModal();
   renderDetail();
@@ -1921,7 +1952,7 @@ function preferredMealForExtra(name){
 }
 
 function buildDayFromPantry(di){
-  const names=[...(pantryFoods[di]||[])].filter(n=>DB[n]);
+  const names=(pantryFoods[di]||[]).filter(isAvailableFood);
   if(!names.length){alert('请先点「选择食物」，从食物库里选择今天有的食物');return;}
   const day=[[],[],[],[]];
   const add=(mi,name,g=0,keep=1)=>{
@@ -2489,6 +2520,7 @@ function openPicker(e,di,mi,fi){
     item.onclick=()=>{meals[di][mi][fi].n=name;closePicker();renderDetail();};
     pk.appendChild(item);
   });
+  if(!FN.length){const empty=document.createElement('div');empty.className='p-item';empty.textContent='没有可选的食物，请到食物库添加或恢复。';pk.appendChild(empty);}
   const rect=e.target.getBoundingClientRect();
   pk.style.left=Math.min(rect.left,window.innerWidth-170)+'px';
   pk.style.top=Math.min(rect.bottom+2,window.innerHeight-260)+'px';
@@ -2543,13 +2575,13 @@ function openModal(di,mi,initialName=''){
     `<div class="mf"><label>选择食物</label><select id="m-food"></select></div>`+
     `<div class="mf"><label>数量 / 克 / 毫升</label><input id="m-gram" type="number" placeholder="100"/></div>`+
     `<div class="mprev" id="m-prev">—</div>`+
-    `<button class="add-own-food" type="button" onclick="openFoodHub({kind:'meal',di:${di},mi:${mi}})">＋ 食物库没有？添加新食物</button>`;
+    `<button class="add-own-food" type="button" onclick="openFoodHub({kind:'meal',di:${di},mi:${mi}})">打开食物库</button>`;
   document.getElementById('m-btns').innerHTML=
     `<button class="bsec" onclick="closeModal()">取消</button>`+
     `<button class="bpri" onclick="confirmAdd()">添加</button>`;
   const mf=document.getElementById('m-food');
   mf.innerHTML=FN.map(n=>{const d=DB[n];return`<option value="${escapeHtml(n)}">${escapeHtml(n)}${d.raw?'('+escapeHtml(d.raw)+')':''} · ${d.k}kcal/100${d.u||'g'}</option>`;}).join('');
-  if(initialName&&DB[initialName])mf.value=initialName;
+  if(initialName&&isAvailableFood(initialName))mf.value=initialName;
   document.getElementById('m-gram').value=100;
   document.getElementById('m-ttl').textContent='添加到 '+MICONS[mi];
   const upd=()=>{
@@ -2576,13 +2608,22 @@ function inferFoodCategory(c,f,p){
 function openFoodHub(context=null,editName=''){
   foodHubContext=context||foodHubContext;
   document.querySelector('#ov .modal').classList.add('wide');
-  document.getElementById('m-ttl').textContent='智能添加食物';
+  document.getElementById('m-ttl').textContent='食物库';
   document.getElementById('m-body').innerHTML=
     `<div id="foodHubPanel"></div><div id="customFoodLibrary"></div>`;
   document.getElementById('m-btns').innerHTML=`<button class="bsec" onclick="closeModal()">关闭</button>`;
   document.getElementById('ov').classList.add('open');
   if(editName&&DB[editName]?.custom)renderFoodEditor({name:editName,...DB[editName]},editName);
-  else renderSmartFoodHome();
+  else renderFoodLibraryHome();
+}
+
+function renderFoodLibraryHome(message=''){
+  const panel=document.getElementById('foodHubPanel'),library=document.getElementById('customFoodLibrary');
+  if(!panel||!library)return;
+  document.getElementById('m-ttl').textContent='食物库';
+  panel.innerHTML=`<button class="bpri food-library-add" type="button" onclick="renderSmartFoodHome()">＋ 添加食物</button>`+
+    (message?`<div class="food-status" role="status">${escapeHtml(message)}</div>`:'');
+  library.hidden=false;renderCustomFoodLibrary();
 }
 
 function foodFormHtml(food=null,originalName=''){
@@ -2606,17 +2647,22 @@ function foodFormHtml(food=null,originalName=''){
 
 function renderSmartFoodHome(message=''){
   const panel=document.getElementById('foodHubPanel');if(!panel)return;
+  document.getElementById('customFoodLibrary').hidden=true;
+  document.getElementById('m-ttl').textContent='添加食物';
   window._editingFoodName='';window._foodDraftSource='';window._foodDraftSourceId='';window._onlineFoodResults=[];
-  panel.innerHTML=`<div class="smart-food-intro"><strong>输入名称就能添加</strong>例如“冬瓜、玉米、炒青菜”；系统会给出每100克常见平均值，确认后保存。</div>
+  panel.innerHTML=`<button class="mini-btn" type="button" onclick="renderFoodLibraryHome()">返回食物库</button>
+    <div class="smart-food-intro" style="margin-top:8px"><strong>输入名称就能添加</strong>例如“冬瓜、玉米、炒青菜”；系统会给出每100克常见平均值，确认后保存。</div>
     <div class="food-search-row"><input id="smartFoodQuery" placeholder="输入食物名称，或包装条码" onkeydown="if(event.key==='Enter')smartFoodTextSubmit()"/><button class="bpri" type="button" onclick="smartFoodTextSubmit()">查找</button></div>
-    <div class="smart-food-or">或者拍一张照片</div>
-    <label class="upload-box">📷 拍照或选择图片<input id="smartFoodPhoto" type="file" accept="image/*" capture="environment" onchange="smartFoodPhoto(this.files[0])"/></label>
+    <div class="smart-food-or">或者用图片识别</div>
+    <div class="food-photo-actions">
+      <label class="upload-box">📷 拍照<input id="smartFoodCamera" type="file" accept="image/*" capture="environment" onchange="selectFoodImage(this)"/></label>
+      <label class="upload-box">🖼 从相册选图<input id="smartFoodPhoto" type="file" accept="image/*" onchange="selectFoodImage(this)"/></label>
+    </div>
     <div class="smart-photo-help">系统会按画面主体判断：食物、营养成分表或条形码</div>
     <img class="ocr-preview" id="smartPreview" alt="待识别照片预览"/>
     <div class="food-status" id="smartFoodStatus">${escapeHtml(message||'普通食物名称使用常见平均值；包装食品优先使用营养表。结果需要确认后才保存，照片不会进入食物库。')}</div>
     <div class="food-results" id="smartFoodResults"></div>
     <button class="smart-manual-link" type="button" onclick="renderFoodEditor()">无法识别？手动填写营养数据</button>`;
-  renderCustomFoodLibrary();
 }
 
 // 兼容旧按钮或旧缓存中的调用，界面仍统一回到一个入口。
@@ -2629,11 +2675,13 @@ function showFoodHubTab(tab,editName=''){
 
 function renderFoodEditor(food=null,originalName=''){
   const panel=document.getElementById('foodHubPanel');if(!panel)return;
+  document.getElementById('customFoodLibrary').hidden=true;
+  document.getElementById('m-ttl').textContent=originalName?'编辑食物':'添加食物';
   const x=food||null;
   window._editingFoodName=originalName||'';
   window._foodDraftSource=x?.source||'手动录入';
   window._foodDraftSourceId=x?.sourceId||'';
-  panel.innerHTML=`<button class="mini-btn" type="button" onclick="renderSmartFoodHome()">← 返回智能识别</button><div style="height:8px"></div>`+foodFormHtml(x,originalName);
+  panel.innerHTML=`<button class="mini-btn" type="button" onclick="${originalName?'renderFoodLibraryHome()':'renderSmartFoodHome()'}">${originalName?'返回食物库':'返回智能识别'}</button><div style="height:8px"></div>`+foodFormHtml(x,originalName);
   if(x)document.getElementById('cf-cat').value=x.cat||inferFoodCategory(+x.c||0,+x.f||0,+x.p||0);
   updateFoodEnergyHint();
 }
@@ -2702,13 +2750,39 @@ function useFoodAiResponse(data){
   renderFoodEditor(food,'');
 }
 
+function selectFoodImage(input){
+  const file=input.files?.[0];input.value='';
+  if(file)smartFoodPhoto(file);
+}
+
+function foodPictureError(message){return Object.assign(new Error(message),{code:'PHOTO_FILE'});}
+async function decodeFoodPicture(file){
+  if(typeof createImageBitmap==='function')try{
+    const bitmap=await createImageBitmap(file,{imageOrientation:'from-image'});
+    return{image:bitmap,width:bitmap.width,height:bitmap.height,release:()=>bitmap.close?.()};
+  }catch(e){}
+  const url=URL.createObjectURL(file),image=new Image();
+  try{
+    await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=reject;image.src=url;});
+    return{image,width:image.naturalWidth,height:image.naturalHeight,release:()=>URL.revokeObjectURL(url)};
+  }catch(e){
+    URL.revokeObjectURL(url);
+    throw foodPictureError('这张图片在当前浏览器里打不开。可以试试选它的截图，或换成 JPG、PNG 再试。');
+  }
+}
+
 async function fileToAiDataUrl(file){
-  if(!/^image\/(?:jpeg|png|webp)$/i.test(file.type||''))throw new Error('请选择 JPG、PNG 或 WebP 图片。');
-  if(file.size>15*1024*1024)throw new Error('照片太大，请换一张或先裁剪。');
-  const bitmap=await createImageBitmap(file,{imageOrientation:'from-image'});
-  const maxSide=1800,scale=Math.min(1,maxSide/Math.max(bitmap.width,bitmap.height));
-  const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(bitmap.width*scale));canvas.height=Math.max(1,Math.round(bitmap.height*scale));
-  const ctx=canvas.getContext('2d',{alpha:false});ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close?.();
+  const type=String(file.type||'').toLowerCase(),name=String(file.name||'');
+  const knownType=/^image\/(?:jpeg|png|webp|hei[cf](?:-sequence)?)$/.test(type);
+  const knownExtension=/\.(?:jpe?g|png|webp|hei[cf])$/i.test(name);
+  if(!(knownType||((!type||type==='application/octet-stream')&&knownExtension)))throw foodPictureError('请选择 JPG、PNG、WebP 或 HEIC/HEIF 照片。');
+  if(file.size>15*1024*1024)throw foodPictureError('照片太大，请换一张或先裁剪。');
+  const picture=await decodeFoodPicture(file);
+  const maxSide=1800,scale=Math.min(1,maxSide/Math.max(picture.width,picture.height));
+  const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(picture.width*scale));canvas.height=Math.max(1,Math.round(picture.height*scale));
+  try{
+    const ctx=canvas.getContext('2d',{alpha:false});ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(picture.image,0,0,canvas.width,canvas.height);
+  }finally{picture.release();}
   let dataUrl=canvas.toDataURL('image/jpeg',.88);
   if(dataUrl.length>5.4*1024*1024){
     const smaller=document.createElement('canvas'),smallScale=Math.min(1,1400/Math.max(canvas.width,canvas.height));
@@ -2865,14 +2939,19 @@ async function smartFoodPhoto(file){
   const {status,box}=smartFoodElements(),preview=document.getElementById('smartPreview');
   if(!status||!box)return;
   const previewUrl=URL.createObjectURL(file);preview.src=previewUrl;preview.style.display='block';box.innerHTML='';
-  status.textContent='正在判断照片类型…';
-  const barcodeHint=await detectBarcodeInPhoto(file);
-  status.textContent='正在识别画面主体和营养数据…';
+  status.textContent='正在读取照片…';
+  let barcodeHint='';
   try{
     const imageDataUrl=await fileToAiDataUrl(file);
+    barcodeHint=await detectBarcodeInPhoto(file);
+    status.textContent='正在识别画面主体和营养数据…';
     useFoodAiResponse(await callFoodAi({imageDataUrl,barcodeHint,fileName:String(file.name||'photo').slice(0,120)}));
     URL.revokeObjectURL(previewUrl);return;
   }catch(e){
+    if(e.code==='PHOTO_FILE'){
+      preview.removeAttribute('src');preview.style.display='none';URL.revokeObjectURL(previewUrl);
+      status.textContent=e.message;return;
+    }
     status.textContent=`${e.message} 正在改用本地识别…`;
   }
   await smartFoodPhotoFallback(file,previewUrl,barcodeHint);
@@ -2950,6 +3029,7 @@ function finishFoodSave(name,oldName=''){
     Object.values(templates).forEach(pack=>Object.values(pack||{}).forEach(list=>(list||[]).forEach(tpl=>(tpl.meals||[]).forEach(meal=>(meal||[]).forEach(it=>{if(it.n===oldName)it.n=name;})))));
     saveMealTemplates(templates);
   }
+  if(oldName){renderFoodLibraryHome(`“${name}”已更新。`);renderDetail();return;}
   const ctx=foodHubContext;
   if(ctx?.kind==='pantry'){
     pantryFoods[ctx.di]=[...new Set([...(pantryFoods[ctx.di]||[]),name])];
@@ -2958,32 +3038,100 @@ function finishFoodSave(name,oldName=''){
   if(ctx?.kind==='meal'){
     const {di,mi}=ctx;closeModal();openModal(di,mi,name);return;
   }
-  renderSmartFoodHome(`“${name}”已保存到我的食物库。`);
+  renderFoodLibraryHome(`“${name}”已保存到食物库。`);
 }
 
 function renderCustomFoodLibrary(){
-  const box=document.getElementById('customFoodLibrary');if(!box)return;
-  const list=customFoods.slice().sort((a,b)=>a.name.localeCompare(b.name,'zh-CN'));
-  const syncText=foodSyncMessage||(getFoodSyncToken(false)?'已开启云端保存；修改和删除会自动同步。':'点击“云同步”，换浏览器或设备也能看到同一份食物库。');
-  box.innerHTML=`<div class="food-library-head"><div class="food-library-title">我的食物（${list.length}）</div><div class="food-library-tools"><button class="mini-btn sync" type="button" onclick="syncCustomFoods(true)">☁️ 云同步</button><button class="mini-btn" type="button" onclick="exportCustomFoods()">导出</button><label class="mini-btn">导入<input type="file" accept="application/json,.json" style="display:none" onchange="importCustomFoods(this.files[0])"/></label></div></div><div id="foodSyncStatus" class="food-sync-status ${foodSyncTone}">${escapeHtml(syncText)}</div>`+
-    (list.length?`<div class="custom-food-list">${list.map((x,i)=>`<div class="custom-food-row"><div class="custom-food-main"><div class="custom-food-name">${escapeHtml(x.name)}</div><div class="custom-food-meta">每100${x.u} · ${Math.round(x.k)}kcal · 碳${x.c} 脂${x.f} 蛋${x.p}</div></div><div class="custom-food-btns"><button class="mini-btn" type="button" onclick="editCustomFoodAt(${i})">编辑</button><button class="mini-btn danger" type="button" aria-label="删除${escapeHtml(x.name)}" onclick="deleteCustomFoodAt(${i})">🗑 删除</button></div></div>`).join('')}</div>`:'<div class="custom-food-empty">还没有自己的食物，保存后会出现在这里。</div>');
-  window._sortedCustomFoods=list;
+  const box=document.getElementById('customFoodLibrary');if(!box||box.hidden)return;
+  if(!document.getElementById('foodLibraryRows')){
+    box.innerHTML=`<div class="food-library-head"><div class="food-library-title" id="foodLibraryTotal"></div><div class="food-library-tools"><button class="mini-btn sync" type="button" onclick="syncCustomFoods(true)">☁️ 云同步</button><button class="mini-btn" type="button" onclick="exportCustomFoods()">导出</button><label class="mini-btn">导入<input type="file" accept="application/json,.json" style="display:none" onchange="importCustomFoods(this.files[0])"/></label></div></div>
+      <div id="foodSyncStatus" class="food-sync-status"></div>
+      <input id="foodLibraryFilter" class="food-library-filter" type="search" aria-label="搜索食物库" placeholder="搜索食物库" oninput="renderFoodLibraryRows()">
+      <div id="foodLibraryRows"></div>`;
+    document.getElementById('foodLibraryRows').onclick=e=>{
+      const button=e.target.closest('button[data-food-action]');if(!button)return;
+      const {foodAction,foodName}=button.dataset;
+      if(foodAction==='restore')restoreLibraryFood(foodName);
+      else if(foodAction==='remove')removeLibraryFood(foodName);
+      else if(foodAction==='edit'&&DB[foodName]?.custom)renderFoodEditor({name:foodName,...DB[foodName]},foodName);
+    };
+  }
+  document.getElementById('foodLibraryTotal').textContent=`全部食物（${FN.length}）`;
+  const sync=document.getElementById('foodSyncStatus');
+  sync.textContent=foodSyncMessage||(getFoodSyncToken(false)?'已开启自定义食物云同步。':'云同步、导入和导出适用于自定义食物。');
+  sync.className=`food-sync-status ${foodSyncTone}`;
+  renderFoodLibraryRows();
 }
 
-function editCustomFoodAt(i){const x=(window._sortedCustomFoods||[])[i];if(x)renderFoodEditor(x,x.name);}
-function templatesUseFood(name){
-  const data=loadMealTemplates();
-  return Object.values(data).some(pack=>Object.values(pack||{}).some(list=>(list||[]).some(tpl=>(tpl.meals||[]).some(meal=>(meal||[]).some(it=>it.n===name)))));
+function renderFoodLibraryRows(){
+  const box=document.getElementById('foodLibraryRows');if(!box)return;
+  const query=normFoodText(document.getElementById('foodLibraryFilter')?.value);
+  const sorted=names=>names.filter(name=>!query||normFoodText(name).includes(query)).sort((a,b)=>a.localeCompare(b,'zh-CN'));
+  const own=sorted(FN.filter(name=>DB[name].custom)),system=sorted(FN.filter(name=>!DB[name].custom));
+  const removed=sorted([...hiddenFoods].filter(name=>Object.hasOwn(DB,name)));
+  const wasOpen=box.querySelector('details')?.open||false;
+  const action=(name,key,label,style='')=>`<button class="mini-btn ${style}" type="button" data-food-action="${key}" data-food-name="${escapeHtml(name)}" aria-label="${label}${escapeHtml(name)}">${label}</button>`;
+  function row(name,archived=false){
+    const d=DB[name];
+    const buttons=archived?action(name,'restore','恢复'):(d.custom?action(name,'edit','编辑'):'')+action(name,'remove','删除','danger food-delete-btn');
+    return `<div class="custom-food-row"><div class="custom-food-main"><div class="custom-food-name" title="${escapeHtml(name)}">${escapeHtml(name)}</div><div class="custom-food-meta">每${d.unitG?'1':'100'}${escapeHtml(d.u||'g')} · ${Math.round(d.k)} kcal · 碳${d.c} 脂${d.f} 蛋${d.p}</div></div><div class="custom-food-btns">${buttons}</div></div>`;
+  }
+  const group=(label,names)=>names.length?`<div class="food-library-label">${label}（${names.length}）</div><div class="custom-food-list">${names.map(name=>row(name)).join('')}</div>`:'';
+  box.innerHTML=group('我的食物',own)+group('系统食物',system)+
+    (!own.length&&!system.length&&!removed.length?`<div class="custom-food-empty">${query?'没有找到匹配的食物。':'还没有可用食物，可以添加或恢复。'}</div>`:'')+
+    (removed.length?`<details class="food-library-removed" ${wasOpen||query?'open':''}><summary>已移除（${removed.length}）</summary><div class="custom-food-list">${removed.map(name=>row(name,true)).join('')}</div></details>`:'');
 }
-function deleteCustomFoodAt(i){
-  const x=(window._sortedCustomFoods||[])[i];if(!x)return;
-  const inUse=meals.some(day=>day.some(meal=>meal.some(it=>it.n===x.name)))||templatesUseFood(x.name);
-  if(inUse){alert('这个食物正在当前餐单或已保存模板中使用，请先移除后再删除。');return;}
-  if(!confirm(`确定删除“${x.name}”吗？`))return;
+
+function mealDayUsesFood(day,name){
+  return Array.isArray(day)&&day.some(meal=>Array.isArray(meal)&&meal.some(it=>it?.n===name));
+}
+function customFoodUses(name){
+  const uses=[];
+  const activeDays=DAYS.filter((_,i)=>mealDayUsesFood(meals[i],name));
+  if(activeDays.length)uses.push(`当前餐单：${activeDays.join('、')}`);
+  const otherPlans=Object.entries(readStoredJson(CURRENT_PLAN_KEY)||{}).filter(([key])=>key!==`p${activeProfile}`);
+  const otherDays=DAYS.filter((_,i)=>otherPlans.some(([,plan])=>mealDayUsesFood(plan?.meals?.[i],name)));
+  if(otherDays.length)uses.push(`其他人物的餐单：${otherDays.join('、')}`);
+  const tplNames=new Set();
+  Object.values(loadMealTemplates()||{}).forEach(pack=>Object.values(pack||{}).forEach(list=>{
+    if(!Array.isArray(list))return;
+    list.forEach(tpl=>{if(mealDayUsesFood(tpl?.meals,name))tplNames.add(tpl.name||'未命名模板');});
+  }));
+  if(tplNames.size)uses.push(`已保存模板：${[...tplNames].join('、')}`);
+  return uses;
+}
+function removeLibraryFood(name){
+  if(!isAvailableFood(name))return false;
+  const builtIn=BUILTIN_FOOD_NAMES.includes(name);
+  const uses=builtIn?[]:customFoodUses(name);
+  if(builtIn||uses.length){
+    const reason=uses.length?`\n\n这项食物正在使用：\n${uses.join('\n')}`:'';
+    if(!confirm(`从食物库移除“${name}”？${reason}\n\n只从本浏览器的食物库和可选列表移除，不会改已有餐单。之后可在“已移除”里恢复。`))return false;
+    if(!setFoodHidden(name,true))return false;
+    renderCustomFoodLibrary();renderDetail();
+    return true;
+  }
+  const syncNote=getFoodSyncToken(false)?' 开启云同步的设备也会删除。':'';
+  if(!confirm(`确定删除自定义食物“${name}”？删除后需要重新添加。${syncNote}`))return false;
   const deletedAt=new Date().toISOString();
-  customFoods=customFoods.filter(y=>y.name!==x.name);delete DB[x.name];refreshFoodNames();
-  customFoodDeletions=customFoodDeletions.filter(y=>y.name!==x.name).concat({name:x.name,deletedAt});
-  pantryFoods=pantryFoods.map(list=>list.filter(n=>n!==x.name));saveCustomFoods();renderCustomFoodLibrary();
+  const beforeFoods=customFoods,beforeDeletions=customFoodDeletions;
+  customFoods=customFoods.filter(x=>x.name!==name);
+  customFoodDeletions=customFoodDeletions.filter(x=>x.name!==name).concat({name,deletedAt});
+  if(!saveCustomFoods(false)){
+    customFoods=beforeFoods;customFoodDeletions=beforeDeletions;
+    try{localStorage.setItem(CUSTOM_FOOD_KEY,JSON.stringify(beforeFoods));}catch(e){}
+    return false;
+  }
+  delete DB[name];refreshFoodNames();
+  pantryFoods=pantryFoods.map(list=>list.filter(n=>n!==name));
+  renderCustomFoodLibrary();renderDetail();queueFoodSync();
+  return true;
+}
+
+function restoreLibraryFood(name){
+  if(!hiddenFoods.has(name)||!Object.hasOwn(DB,name)||!setFoodHidden(name,false))return false;
+  renderCustomFoodLibrary();renderDetail();
+  return true;
 }
 
 function exportCustomFoods(){
@@ -3015,7 +3163,7 @@ async function importCustomFoods(file){
 function closeModal(){document.getElementById('ov').classList.remove('open');document.querySelector('#ov .modal').classList.remove('wide');_mc=null;window._pantryDraft=null;window._editingFoodName='';window._foodDraftSource='';window._foodDraftSourceId='';foodHubContext=null;}
 function confirmAdd(){
   const name=document.getElementById('m-food').value;const g=+document.getElementById('m-gram').value||0;
-  if(!name||g<=0){alert('请选择食物并填写克重');return;}
+  if(!isAvailableFood(name)||g<=0){alert('请选择食物并填写克重');return;}
   meals[_mc.di][_mc.mi].push({n:name,g,lk:0});closeModal();renderDetail();
 }
 document.getElementById('ov').onclick=e=>{if(e.target===document.getElementById('ov'))closeModal();};
