@@ -311,10 +311,12 @@ body{background:var(--bg);min-height:100vh;-webkit-font-smoothing:antialiased;}
 .food-result-name{font-size:12px;font-weight:700;color:var(--tx);}
 .food-result-brand,.food-result-macro{font-size:10px;color:var(--tx3);margin-top:2px;}
 .food-result-kcal{font-size:12px;color:var(--acc);font-weight:700;white-space:nowrap;}
-.food-photo-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.upload-box{position:relative;display:flex;align-items:center;justify-content:center;gap:5px;min-height:44px;border:1px dashed var(--hi-bd);background:var(--hi-bg);color:var(--acc);border-radius:12px;padding:8px;text-align:center;font-size:13px;font-weight:700;cursor:pointer;}
-.upload-box:focus-within{outline:2px solid var(--acc);outline-offset:2px;}
-.upload-box input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;}
+.food-photo-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+.food-photo-source{min-width:0;border:1px solid var(--hi-bd);background:var(--hi-bg);border-radius:12px;padding:7px;}
+.food-photo-source label{display:block;text-align:center;padding:4px 0;color:var(--acc);font-size:13px;font-weight:700;cursor:pointer;}
+.food-photo-input{display:block;width:100%;min-width:0;min-height:44px;color:var(--tx2);font-size:12px;cursor:pointer;}
+.food-photo-input::-webkit-file-upload-button{min-height:40px;border:1px solid var(--hi-bd);background:var(--sur);color:var(--acc);border-radius:8px;padding:0 6px;font-size:12px;cursor:pointer;}
+.food-photo-input::file-selector-button{min-height:40px;border:1px solid var(--hi-bd);background:var(--sur);color:var(--acc);border-radius:8px;padding:0 6px;font-size:12px;cursor:pointer;}
 .ocr-preview{display:none;max-width:100%;max-height:190px;margin:8px auto;border-radius:10px;border:1px solid var(--bd);object-fit:contain;}
 .source-note{margin-bottom:9px;padding:7px 9px;background:#f7faf8;border:1px solid #dcebe4;border-radius:9px;color:var(--tx2);font-size:10px;line-height:1.4;}
 
@@ -2655,12 +2657,18 @@ function renderSmartFoodHome(message=''){
     <div class="food-search-row"><input id="smartFoodQuery" placeholder="输入食物名称，或包装条码" onkeydown="if(event.key==='Enter')smartFoodTextSubmit()"/><button class="bpri" type="button" onclick="smartFoodTextSubmit()">查找</button></div>
     <div class="smart-food-or">或者用图片识别</div>
     <div class="food-photo-actions">
-      <label class="upload-box">📷 拍照<input id="smartFoodCamera" type="file" accept="image/*" capture="environment" onchange="selectFoodImage(this)"/></label>
-      <label class="upload-box">🖼 从相册选图<input id="smartFoodPhoto" type="file" accept="image/*" onchange="selectFoodImage(this)"/></label>
+      <div class="food-photo-source">
+        <label for="smartFoodCamera">📷 拍照</label>
+        <input class="food-photo-input" id="smartFoodCamera" type="file" accept="image/*" capture="environment" aria-describedby="smartPhotoHelp" onchange="selectFoodImage(this)">
+      </div>
+      <div class="food-photo-source">
+        <label for="smartFoodPhoto">🖼 从相册选图</label>
+        <input class="food-photo-input" id="smartFoodPhoto" type="file" accept="image/*" aria-describedby="smartPhotoHelp" onchange="selectFoodImage(this)">
+      </div>
     </div>
-    <div class="smart-photo-help">系统会按画面主体判断：食物、营养成分表或条形码</div>
+    <div class="smart-photo-help" id="smartPhotoHelp">用已有照片请点右边的选取文件按钮，再选照片图库。系统会自动识别食物、营养成分表或条形码。</div>
     <img class="ocr-preview" id="smartPreview" alt="待识别照片预览"/>
-    <div class="food-status" id="smartFoodStatus">${escapeHtml(message||'普通食物名称使用常见平均值；包装食品优先使用营养表。结果需要确认后才保存，照片不会进入食物库。')}</div>
+    <div class="food-status" id="smartFoodStatus" role="status" aria-live="polite">${escapeHtml(message||'普通食物名称使用常见平均值；包装食品优先使用营养表。结果需要确认后才保存，照片不会进入食物库。')}</div>
     <div class="food-results" id="smartFoodResults"></div>
     <button class="smart-manual-link" type="button" onclick="renderFoodEditor()">无法识别？手动填写营养数据</button>`;
 }
@@ -2750,9 +2758,16 @@ function useFoodAiResponse(data){
   renderFoodEditor(food,'');
 }
 
-function selectFoodImage(input){
-  const file=input.files?.[0];input.value='';
-  if(file)smartFoodPhoto(file);
+async function selectFoodImage(input){
+  const file=input.files?.[0];if(!file)return;
+  const {status}=smartFoodElements();if(!status)return;
+  status.textContent='已选中照片，正在读取…';
+  const slow=setTimeout(()=>{
+    if(status.textContent==='已选中照片，正在读取…'||status.textContent==='正在识别画面主体和营养数据…')status.textContent='照片已选中，处理比平时久，请稍等，不用重复选图。';
+  },12000);
+  try{await smartFoodPhoto(file);}
+  catch(e){status.textContent='这张照片处理失败。请换一张图片或选择它的截图重试。';}
+  finally{clearTimeout(slow);input.value='';}
 }
 
 function foodPictureError(message){return Object.assign(new Error(message),{code:'PHOTO_FILE'});}
@@ -2939,7 +2954,7 @@ async function smartFoodPhoto(file){
   const {status,box}=smartFoodElements(),preview=document.getElementById('smartPreview');
   if(!status||!box)return;
   const previewUrl=URL.createObjectURL(file);preview.src=previewUrl;preview.style.display='block';box.innerHTML='';
-  status.textContent='正在读取照片…';
+  status.textContent='已选中照片，正在读取…';
   let barcodeHint='';
   try{
     const imageDataUrl=await fileToAiDataUrl(file);
